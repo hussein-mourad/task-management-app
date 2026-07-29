@@ -1,0 +1,21 @@
+{
+  "name": "task-management-app",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "bun run --filter './apps/*' dev",
+    "build": "bun run --filter './apps/*' build",
+    "test": "bun run --filter backend test && bun run --filter frontend test",
+    "clean": "rm -rf 'apps/*/node_modules' 'packages/*/dist' 'packages/*/.bun'",
+    "dev:backend": "bun run --filter backend dev",
+    "db:studio": "bun run --filter backend db:studio",
+    "dev:frontend": "bun run --filter frontend dev"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "shadcn": "^4.13.0"
+  }
+}
