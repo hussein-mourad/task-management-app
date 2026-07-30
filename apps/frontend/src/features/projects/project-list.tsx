@@ -1,6 +1,10 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useAuth } from "@/features/auth/auth-context";
 
 type Project = {
@@ -43,20 +47,14 @@ export function ProjectList() {
 	}, [fetchProjects]);
 
 	if (loading)
-		return <div className="p-8 text-gray-500">Loading projects...</div>;
-	if (error) return <div className="p-8 text-red-600">{error}</div>;
+		return <div className="p-8 text-muted-foreground">Loading projects...</div>;
+	if (error) return <div className="p-8 text-destructive">{error}</div>;
 
 	return (
 		<div className="p-8">
 			<div className="mb-6 flex items-center justify-between">
 				<h1 className="text-2xl font-bold">Projects</h1>
-				<button
-					type="button"
-					onClick={() => setShowForm(true)}
-					className="rounded bg-blue-600 px-4 py-2 text-white"
-				>
-					New Project
-				</button>
+				<Button onClick={() => setShowForm(true)}>New Project</Button>
 			</div>
 			{showForm && (
 				<ProjectForm
@@ -83,13 +81,24 @@ export function ProjectList() {
 function ProjectCard({ project }: { project: Project }) {
 	return (
 		<Link
-			to={`/projects/${project.id}`}
-			className="block rounded-lg border p-4 hover:shadow-md"
+			to="/projects/$projectId"
+			params={{
+				projectId: project.id,
+			}}
+			className="block"
 		>
-			<h2 className="text-lg font-semibold">{project.name}</h2>
-			{project.description && (
-				<p className="mt-1 text-sm text-gray-600">{project.description}</p>
-			)}
+			<Card className="transition-shadow hover:shadow-md">
+				<CardHeader>
+					<CardTitle>{project.name}</CardTitle>
+				</CardHeader>
+				{project.description && (
+					<CardContent>
+						<p className="text-sm text-muted-foreground">
+							{project.description}
+						</p>
+					</CardContent>
+				)}
+			</Card>
 		</Link>
 	);
 }
@@ -134,48 +143,50 @@ function ProjectForm({
 	}
 
 	return (
-		<form
-			onSubmit={handleSubmit}
-			className="mb-6 space-y-3 rounded-lg border p-4"
-		>
-			<h2 className="font-semibold">New Project</h2>
-			{error && <p className="text-sm text-red-600">{error}</p>}
-			<input
-				className="w-full rounded border px-3 py-2"
-				placeholder="Project name"
-				value={name}
-				onChange={(e) => setName(e.target.value)}
-				required
-			/>
-			<textarea
-				className="w-full rounded border px-3 py-2"
-				placeholder="Description (optional)"
-				value={description}
-				onChange={(e) => setDescription(e.target.value)}
-			/>
-			<div className="flex gap-2">
-				<button
-					type="submit"
-					className="rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-50"
-					disabled={submitting}
-				>
-					Create
-				</button>
-				<button
-					type="button"
-					onClick={onClose}
-					className="rounded border px-4 py-2"
-				>
-					Cancel
-				</button>
-			</div>
-		</form>
+		<Card className="mb-6">
+			<CardHeader>
+				<CardTitle>New Project</CardTitle>
+			</CardHeader>
+			<CardContent>
+				<form onSubmit={handleSubmit} className="space-y-3">
+					{error && <p className="text-sm text-destructive">{error}</p>}
+					<div className="space-y-1">
+						<Label htmlFor="project-name">Project name</Label>
+						<Input
+							id="project-name"
+							placeholder="Project name"
+							value={name}
+							onChange={(e) => setName(e.target.value)}
+							required
+						/>
+					</div>
+					<div className="space-y-1">
+						<Label htmlFor="project-desc">Description (optional)</Label>
+						<textarea
+							id="project-desc"
+							className="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+							placeholder="Description (optional)"
+							value={description}
+							onChange={(e) => setDescription(e.target.value)}
+						/>
+					</div>
+					<div className="flex gap-2">
+						<Button type="submit" disabled={submitting}>
+							{submitting ? "Creating..." : "Create"}
+						</Button>
+						<Button type="button" variant="outline" onClick={onClose}>
+							Cancel
+						</Button>
+					</div>
+				</form>
+			</CardContent>
+		</Card>
 	);
 }
 
 function EmptyState({ message }: { message: string }): ReactNode {
 	return (
-		<div className="rounded-lg border border-dashed p-12 text-center text-gray-500">
+		<div className="rounded-lg border border-dashed p-12 text-center text-muted-foreground">
 			{message}
 		</div>
 	);

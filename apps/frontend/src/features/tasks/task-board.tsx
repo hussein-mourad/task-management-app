@@ -1,5 +1,17 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { useAuth } from "@/features/auth/auth-context";
 
 type Task = {
@@ -37,10 +49,15 @@ export function TaskBoard({ projectId }: { projectId: string }) {
 		const headers = { Authorization: `Bearer ${token}` };
 		setLoading(true);
 		try {
+			const params = new URLSearchParams();
+			if (filter.status) params.set("status", filter.status);
+			if (filter.priority) params.set("priority", filter.priority);
+			if (filter.assignee) params.set("assignee", filter.assignee);
+
 			const [projectRes, tasksRes] = await Promise.all([
 				fetch(`http://localhost:8000/api/projects/${projectId}`, { headers }),
 				fetch(
-					`http://localhost:8000/api/projects/${projectId}/tasks?${new URLSearchParams(filter)}`,
+					`http://localhost:8000/api/projects/${projectId}/tasks?${params}`,
 					{ headers },
 				),
 			]);
@@ -64,10 +81,11 @@ export function TaskBoard({ projectId }: { projectId: string }) {
 		fetchData();
 	}, [fetchData]);
 
-	if (loading) return <div className="p-8 text-gray-500">Loading...</div>;
-	if (error) return <div className="p-8 text-red-600">{error}</div>;
+	if (loading)
+		return <div className="p-8 text-muted-foreground">Loading...</div>;
+	if (error) return <div className="p-8 text-destructive">{error}</div>;
 	if (!project)
-		return <div className="p-8 text-red-600">Project not found</div>;
+		return <div className="p-8 text-destructive">Project not found</div>;
 
 	const columns = ["todo", "in_progress", "done"];
 	const columnLabels: Record<string, string> = {
@@ -82,40 +100,42 @@ export function TaskBoard({ projectId }: { projectId: string }) {
 				<div>
 					<h1 className="text-2xl font-bold">{project.name}</h1>
 					{project.description && (
-						<p className="text-gray-600">{project.description}</p>
+						<p className="text-muted-foreground">{project.description}</p>
 					)}
 				</div>
-				<button
-					type="button"
-					onClick={() => setShowForm(true)}
-					className="rounded bg-blue-600 px-4 py-2 text-white"
-				>
-					New Task
-				</button>
+				<Button onClick={() => setShowForm(true)}>New Task</Button>
 			</div>
 
 			<div className="mb-4 flex gap-2">
-				<select
-					className="rounded border px-2 py-1 text-sm"
+				<Select
 					value={filter.status}
-					onChange={(e) => setFilter({ ...filter, status: e.target.value })}
+					onValueChange={(value) => setFilter({ ...filter, status: value })}
 				>
-					<option value="">All statuses</option>
-					<option value="todo">To Do</option>
-					<option value="in_progress">In Progress</option>
-					<option value="done">Done</option>
-				</select>
-				<select
-					className="rounded border px-2 py-1 text-sm"
+					<SelectTrigger className="w-[150px]">
+						<SelectValue placeholder="All statuses" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="">All statuses</SelectItem>
+						<SelectItem value="todo">To Do</SelectItem>
+						<SelectItem value="in_progress">In Progress</SelectItem>
+						<SelectItem value="done">Done</SelectItem>
+					</SelectContent>
+				</Select>
+				<Select
 					value={filter.priority}
-					onChange={(e) => setFilter({ ...filter, priority: e.target.value })}
+					onValueChange={(value) => setFilter({ ...filter, priority: value })}
 				>
-					<option value="">All priorities</option>
-					<option value="low">Low</option>
-					<option value="medium">Medium</option>
-					<option value="high">High</option>
-					<option value="critical">Critical</option>
-				</select>
+					<SelectTrigger className="w-[150px]">
+						<SelectValue placeholder="All priorities" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="">All priorities</SelectItem>
+						<SelectItem value="low">Low</SelectItem>
+						<SelectItem value="medium">Medium</SelectItem>
+						<SelectItem value="high">High</SelectItem>
+						<SelectItem value="critical">Critical</SelectItem>
+					</SelectContent>
+				</Select>
 			</div>
 
 			{showForm && (
@@ -130,14 +150,14 @@ export function TaskBoard({ projectId }: { projectId: string }) {
 			)}
 
 			{tasks.length === 0 ? (
-				<div className="rounded-lg border border-dashed p-12 text-center text-gray-500">
+				<div className="rounded-lg border border-dashed p-12 text-center text-muted-foreground">
 					No tasks yet
 				</div>
 			) : (
 				<div className="grid gap-4 md:grid-cols-3">
 					{columns.map((col) => (
-						<div key={col} className="rounded-lg border bg-gray-50 p-4">
-							<h2 className="mb-3 font-semibold text-gray-700">
+						<div key={col} className="rounded-lg border bg-muted/50 p-4">
+							<h2 className="mb-3 font-semibold text-muted-foreground">
 								{columnLabels[col]}
 							</h2>
 							<div className="space-y-2">
@@ -156,32 +176,39 @@ export function TaskBoard({ projectId }: { projectId: string }) {
 }
 
 function TaskCard({ task }: { task: Task }) {
-	const priorityColors: Record<string, string> = {
-		low: "bg-gray-200",
-		medium: "bg-blue-200",
-		high: "bg-orange-200",
-		critical: "bg-red-200",
+	const priorityVariants: Record<
+		string,
+		"default" | "secondary" | "destructive" | "outline" | "ghost" | "link"
+	> = {
+		low: "secondary",
+		medium: "outline",
+		high: "default",
+		critical: "destructive",
 	};
 
 	return (
-		<div className="rounded border bg-white p-3 shadow-sm">
-			<h3 className="font-medium">{task.title}</h3>
-			{task.description && (
-				<p className="mt-1 text-xs text-gray-600">{task.description}</p>
-			)}
-			<div className="mt-2 flex items-center gap-2">
-				<span
-					className={`rounded px-2 py-0.5 text-xs ${priorityColors[task.priority] || "bg-gray-200"}`}
-				>
-					{task.priority}
-				</span>
-				{task.dueDate && (
-					<span className="text-xs text-gray-500">
-						{new Date(task.dueDate).toLocaleDateString()}
-					</span>
+		<Card>
+			<CardHeader>
+				<CardTitle>{task.title}</CardTitle>
+			</CardHeader>
+			<CardContent>
+				{task.description && (
+					<p className="mb-2 text-xs text-muted-foreground">
+						{task.description}
+					</p>
 				)}
-			</div>
-		</div>
+				<div className="flex items-center gap-2">
+					<Badge variant={priorityVariants[task.priority] || "secondary"}>
+						{task.priority}
+					</Badge>
+					{task.dueDate && (
+						<span className="text-xs text-muted-foreground">
+							{new Date(task.dueDate).toLocaleDateString()}
+						</span>
+					)}
+				</div>
+			</CardContent>
+		</Card>
 	);
 }
 
@@ -235,59 +262,59 @@ function TaskForm({
 	}
 
 	return (
-		<form
-			onSubmit={handleSubmit}
-			className="mb-6 space-y-3 rounded-lg border p-4"
-		>
-			<h2 className="font-semibold">New Task</h2>
-			{error && <p className="text-sm text-red-600">{error}</p>}
-			<input
-				className="w-full rounded border px-3 py-2"
-				placeholder="Task title"
-				value={title}
-				onChange={(e) => setTitle(e.target.value)}
-				required
-			/>
-			<textarea
-				className="w-full rounded border px-3 py-2"
-				placeholder="Description (optional)"
-				value={description}
-				onChange={(e) => setDescription(e.target.value)}
-			/>
-			<div className="flex gap-2">
-				<select
-					className="rounded border px-3 py-2"
-					value={priority}
-					onChange={(e) => setPriority(e.target.value)}
-				>
-					<option value="low">Low</option>
-					<option value="medium">Medium</option>
-					<option value="high">High</option>
-					<option value="critical">Critical</option>
-				</select>
-				<input
-					className="rounded border px-3 py-2"
-					type="date"
-					value={dueDate}
-					onChange={(e) => setDueDate(e.target.value)}
-				/>
-			</div>
-			<div className="flex gap-2">
-				<button
-					type="submit"
-					className="rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-50"
-					disabled={submitting}
-				>
-					Create
-				</button>
-				<button
-					type="button"
-					onClick={onClose}
-					className="rounded border px-4 py-2"
-				>
-					Cancel
-				</button>
-			</div>
-		</form>
+		<Card className="mb-6">
+			<CardHeader>
+				<CardTitle>New Task</CardTitle>
+			</CardHeader>
+			<CardContent>
+				<form onSubmit={handleSubmit} className="space-y-3">
+					{error && <p className="text-sm text-destructive">{error}</p>}
+					<div className="space-y-1">
+						<Label htmlFor="task-title">Task title</Label>
+						<Input
+							id="task-title"
+							placeholder="Task title"
+							value={title}
+							onChange={(e) => setTitle(e.target.value)}
+							required
+						/>
+					</div>
+					<div className="space-y-1">
+						<Label htmlFor="task-desc">Description (optional)</Label>
+						<textarea
+							id="task-desc"
+							className="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+							placeholder="Description (optional)"
+							value={description}
+							onChange={(e) => setDescription(e.target.value)}
+						/>
+					</div>
+					<Select value={priority} onValueChange={setPriority}>
+						<SelectTrigger className="w-full">
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="low">Low</SelectItem>
+							<SelectItem value="medium">Medium</SelectItem>
+							<SelectItem value="high">High</SelectItem>
+							<SelectItem value="critical">Critical</SelectItem>
+						</SelectContent>
+					</Select>
+					<Input
+						type="date"
+						value={dueDate}
+						onChange={(e) => setDueDate(e.target.value)}
+					/>
+					<div className="flex gap-2">
+						<Button type="submit" disabled={submitting}>
+							{submitting ? "Creating..." : "Create"}
+						</Button>
+						<Button type="button" variant="outline" onClick={onClose}>
+							Cancel
+						</Button>
+					</div>
+				</form>
+			</CardContent>
+		</Card>
 	);
 }

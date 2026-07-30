@@ -7,6 +7,8 @@ import {
 	useNavigate,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Button } from "@/components/ui/button";
 import { AuthProvider, useAuth } from "@/features/auth/auth-context";
 
 import appCss from "@/styles.css?url";
@@ -23,10 +25,32 @@ export const Route = createRootRoute({
 	shellComponent: RootDocument,
 });
 
+function ThemeScript() {
+	return (
+		<script
+			// biome-ignore lint/security/noDangerouslySetInnerHtml: safe inline script for dark mode flash prevention
+			dangerouslySetInnerHTML={{
+				__html: `
+          try {
+            var theme = localStorage.getItem('theme-preference');
+            if (!theme) {
+              theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            if (theme === 'dark') {
+              document.documentElement.classList.add('dark');
+            }
+          } catch(e) {}
+        `,
+			}}
+		/>
+	);
+}
+
 function RootDocument({ children }: { children: React.ReactNode }) {
 	return (
 		<html lang="en">
 			<head>
+				<ThemeScript />
 				<HeadContent />
 			</head>
 			<body>
@@ -65,16 +89,13 @@ function Layout({ children }: { children: React.ReactNode }) {
 						Task Manager
 					</Link>
 					<div className="flex items-center gap-4">
-						<span className="text-sm text-gray-600">
+						<span className="text-sm text-muted-foreground">
 							{user.name} ({user.role})
 						</span>
-						<button
-							type="button"
-							onClick={handleLogout}
-							className="text-sm text-red-600"
-						>
+						<ThemeToggle />
+						<Button variant="destructive" onClick={handleLogout}>
 							Logout
-						</button>
+						</Button>
 					</div>
 				</header>
 			)}

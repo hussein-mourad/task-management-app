@@ -1,5 +1,9 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useAuth } from "./auth-context";
 
 export function RegisterForm() {
@@ -33,51 +37,62 @@ export function RegisterForm() {
 	}
 
 	return (
-		<div className="flex min-h-screen items-center justify-center">
-			<form
-				onSubmit={handleSubmit}
-				className="w-full max-w-sm space-y-4 rounded-lg border p-6"
-			>
-				<h1 className="text-2xl font-bold">Register</h1>
-				{error && <p className="text-sm text-red-600">{error}</p>}
-				<input
-					className="w-full rounded border px-3 py-2"
-					placeholder="Name"
-					value={name}
-					onChange={(e) => setName(e.target.value)}
-					required
-				/>
-				<input
-					className="w-full rounded border px-3 py-2"
-					type="email"
-					placeholder="Email"
-					value={email}
-					onChange={(e) => setEmail(e.target.value)}
-					required
-				/>
-				<input
-					className="w-full rounded border px-3 py-2"
-					type="password"
-					placeholder="Password (min 8 chars)"
-					value={password}
-					onChange={(e) => setPassword(e.target.value)}
-					required
-					minLength={8}
-				/>
-				<button
-					type="submit"
-					className="w-full rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-50"
-					disabled={loading}
-				>
-					{loading ? "Registering..." : "Register"}
-				</button>
-				<p className="text-sm text-gray-600">
-					Already have an account?{" "}
-					<Link to="/login" className="text-blue-600">
-						Login
-					</Link>
-				</p>
-			</form>
+		<div className="flex min-h-screen items-center justify-center p-4">
+			<Card className="w-full max-w-sm">
+				<CardHeader>
+					<CardTitle>Register</CardTitle>
+				</CardHeader>
+				<CardContent>
+					<form onSubmit={handleSubmit} className="space-y-4">
+						{error && <p className="text-sm text-destructive">{error}</p>}
+						<div className="space-y-2">
+							<Label htmlFor="name">Name</Label>
+							<Input
+								id="name"
+								placeholder="Your name"
+								value={name}
+								onChange={(e) => setName(e.target.value)}
+								required
+							/>
+						</div>
+						<div className="space-y-2">
+							<Label htmlFor="email">Email</Label>
+							<Input
+								id="email"
+								type="email"
+								placeholder="Email"
+								value={email}
+								onChange={(e) => setEmail(e.target.value)}
+								required
+							/>
+						</div>
+						<div className="space-y-2">
+							<Label htmlFor="password">Password</Label>
+							<Input
+								id="password"
+								type="password"
+								placeholder="Password (min 8 chars)"
+								value={password}
+								onChange={(e) => setPassword(e.target.value)}
+								required
+								minLength={8}
+							/>
+						</div>
+						<Button type="submit" className="w-full" disabled={loading}>
+							{loading ? "Registering..." : "Register"}
+						</Button>
+						<p className="text-center text-sm text-muted-foreground">
+							Already have an account?{" "}
+							<Link
+								to="/login"
+								className="text-primary underline-offset-4 hover:underline"
+							>
+								Login
+							</Link>
+						</p>
+					</form>
+				</CardContent>
+			</Card>
 		</div>
 	);
 }
