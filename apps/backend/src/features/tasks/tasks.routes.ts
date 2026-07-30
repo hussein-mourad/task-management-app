@@ -15,7 +15,7 @@ async function requireMember(req: Request, _res: Response, next: NextFunction) {
     const [member] = await db
       .select()
       .from(projectMembers)
-      .where(and(eq(projectMembers.projectId, req.params.projectId), eq(projectMembers.userId, req.userId!)))
+      .where(and(eq(projectMembers.projectId, req.params.projectId as string), eq(projectMembers.userId, req.userId!)))
       .limit(1);
     if (!member) throw new AppError(403, "Not a project member");
     next();
@@ -24,9 +24,19 @@ async function requireMember(req: Request, _res: Response, next: NextFunction) {
   }
 }
 
+async function validateAssignee(projectId: string, assignedTo?: string | null) {
+  if (!assignedTo) return;
+  const [member] = await db
+    .select()
+    .from(projectMembers)
+    .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, assignedTo)))
+    .limit(1);
+  if (!member) throw new AppError(400, "Assigned user is not a project member");
+}
+
 tasksRouter.get("/", requireMember, async (req, res, next) => {
   try {
-    const conditions: SQL[] = [eq(tasks.projectId, req.params.projectId)];
+    const conditions: SQL[] = [eq(tasks.projectId, req.params.projectId as string)];
     if (req.query.status) conditions.push(eq(tasks.status, req.query.status as string));
     if (req.query.priority) conditions.push(eq(tasks.priority, req.query.priority as string));
     if (req.query.assignee) conditions.push(eq(tasks.assignedTo, req.query.assignee as string));
@@ -41,10 +51,11 @@ tasksRouter.get("/", requireMember, async (req, res, next) => {
 tasksRouter.post("/", requireMember, async (req, res, next) => {
   try {
     const data = createTaskSchema.parse(req.body);
+    await validateAssignee(req.params.projectId as string, data.assignedTo);
     const [task] = await db
       .insert(tasks)
       .values({
-        projectId: req.params.projectId,
+        projectId: req.params.projectId as string,
         title: data.title,
         description: data.description,
         priority: data.priority,
@@ -64,7 +75,7 @@ tasksRouter.get("/:taskId", requireMember, async (req, res, next) => {
     const [task] = await db
       .select()
       .from(tasks)
-      .where(and(eq(tasks.id, req.params.taskId), eq(tasks.projectId, req.params.projectId)))
+      .where(and(eq(tasks.id, req.params.taskId as string), eq(tasks.projectId, req.params.projectId as string)))
       .limit(1);
     if (!task) throw new AppError(404, "Task not found");
     res.json({ task });
@@ -76,6 +87,7 @@ tasksRouter.get("/:taskId", requireMember, async (req, res, next) => {
 tasksRouter.put("/:taskId", requireMember, async (req, res, next) => {
   try {
     const data = updateTaskSchema.parse(req.body);
+    await validateAssignee(req.params.projectId as string, data.assignedTo);
     const { dueDate, ...rest } = data;
     const updateData: Partial<typeof tasks.$inferInsert> = { ...rest };
     if (dueDate !== undefined) {
@@ -84,7 +96,7 @@ tasksRouter.put("/:taskId", requireMember, async (req, res, next) => {
     const [task] = await db
       .update(tasks)
       .set(updateData)
-      .where(and(eq(tasks.id, req.params.taskId), eq(tasks.projectId, req.params.projectId)))
+      .where(and(eq(tasks.id, req.params.taskId as string), eq(tasks.projectId, req.params.projectId as string)))
       .returning();
     res.json({ task });
   } catch (e) {
@@ -96,7 +108,7 @@ tasksRouter.delete("/:taskId", requireMember, async (req, res, next) => {
   try {
     await db
       .delete(tasks)
-      .where(and(eq(tasks.id, req.params.taskId), eq(tasks.projectId, req.params.projectId)));
+      .where(and(eq(tasks.id, req.params.taskId as string), eq(tasks.projectId, req.params.projectId as string)));
     res.status(204).end();
   } catch (e) {
     next(e);

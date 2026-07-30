@@ -21,8 +21,8 @@ authRouter.post("/register", async (req, res, next) => {
       .values({ email: data.email, passwordHash, name: data.name })
       .returning();
 
-    const token = signToken({ userId: user.id, role: user.role });
-    res.status(201).json({ user: { id: user.id, email: user.email, name: user.name, role: user.role }, token });
+    const token = signToken({ userId: user!.id, role: user!.role });
+    res.status(201).json({ user: { id: user!.id, email: user!.email, name: user!.name, role: user!.role }, token });
   } catch (e) {
     next(e);
   }

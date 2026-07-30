@@ -1,6 +1,6 @@
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { db } from "@/db";
-import { projects, projectMembers } from "@/db/schema";
+import { projects, projectMembers, users } from "@/db/schema";
 import { createProjectSchema, updateProjectSchema, addMemberSchema } from "./projects.validator";
 import { requireAuth } from "@/features/auth/auth.middleware";
 import { AppError } from "@/middleware/errors";
@@ -33,7 +33,7 @@ projectsRouter.post("/", async (req, res, next) => {
   try {
     const data = createProjectSchema.parse(req.body);
     const [project] = await db.insert(projects).values({ name: data.name, description: data.description, createdBy: req.userId! }).returning();
-    await db.insert(projectMembers).values({ projectId: project.id, userId: req.userId!, role: "admin" });
+    await db.insert(projectMembers).values({ projectId: project!.id, userId: req.userId!, role: "admin" });
     res.status(201).json({ project });
   } catch (e) {
     next(e);
@@ -45,7 +45,7 @@ async function requireProjectAccess(req: Request, _res: Response, next: NextFunc
     const [member] = await db
       .select()
       .from(projectMembers)
-      .where(and(eq(projectMembers.projectId, req.params.id), eq(projectMembers.userId, req.userId!)))
+      .where(and(eq(projectMembers.projectId, req.params.id as string), eq(projectMembers.userId, req.userId!)))
       .limit(1);
     if (!member) throw new AppError(403, "Not a project member");
     req.memberRole = member.role;
@@ -60,7 +60,7 @@ async function requireProjectAdmin(req: Request, _res: Response, next: NextFunct
     const [member] = await db
       .select()
       .from(projectMembers)
-      .where(and(eq(projectMembers.projectId, req.params.id), eq(projectMembers.userId, req.userId!)))
+      .where(and(eq(projectMembers.projectId, req.params.id as string), eq(projectMembers.userId, req.userId!)))
       .limit(1);
     if (!member || member.role !== "admin") throw new AppError(403, "Project admin required");
     next();
@@ -71,9 +71,22 @@ async function requireProjectAdmin(req: Request, _res: Response, next: NextFunct
 
 projectsRouter.get("/:id", requireProjectAccess, async (req, res, next) => {
   try {
-    const [project] = await db.select().from(projects).where(eq(projects.id, req.params.id)).limit(1);
+    const [project] = await db.select().from(projects).where(eq(projects.id, req.params.id as string)).limit(1);
     if (!project) throw new AppError(404, "Project not found");
     res.json({ project });
+  } catch (e) {
+    next(e);
+  }
+});
+
+projectsRouter.get("/:id/members", requireProjectAccess, async (req, res, next) => {
+  try {
+    const rows = await db
+      .select({ id: users.id, name: users.name, email: users.email })
+      .from(projectMembers)
+      .innerJoin(users, eq(projectMembers.userId, users.id))
+      .where(eq(projectMembers.projectId, req.params.id as string));
+    res.json({ members: rows });
   } catch (e) {
     next(e);
   }
@@ -82,7 +95,7 @@ projectsRouter.get("/:id", requireProjectAccess, async (req, res, next) => {
 projectsRouter.put("/:id", requireProjectAdmin, async (req, res, next) => {
   try {
     const data = updateProjectSchema.parse(req.body);
-    const [project] = await db.update(projects).set(data).where(eq(projects.id, req.params.id)).returning();
+    const [project] = await db.update(projects).set(data).where(eq(projects.id, req.params.id as string)).returning();
     res.json({ project });
   } catch (e) {
     next(e);
@@ -91,7 +104,7 @@ projectsRouter.put("/:id", requireProjectAdmin, async (req, res, next) => {
 
 projectsRouter.delete("/:id", requireProjectAdmin, async (req, res, next) => {
   try {
-    await db.delete(projects).where(eq(projects.id, req.params.id));
+    await db.delete(projects).where(eq(projects.id, req.params.id as string));
     res.status(204).end();
   } catch (e) {
     next(e);
@@ -101,7 +114,7 @@ projectsRouter.delete("/:id", requireProjectAdmin, async (req, res, next) => {
 projectsRouter.post("/:id/members", requireProjectAdmin, async (req, res, next) => {
   try {
     const data = addMemberSchema.parse(req.body);
-    await db.insert(projectMembers).values({ projectId: req.params.id, userId: data.userId });
+    await db.insert(projectMembers).values({ projectId: req.params.id as string, userId: data.userId });
     res.status(201).json({ message: "Member added" });
   } catch (e) {
     next(e);
@@ -112,7 +125,7 @@ projectsRouter.delete("/:id/members/:userId", requireProjectAdmin, async (req, r
   try {
     await db
       .delete(projectMembers)
-      .where(and(eq(projectMembers.projectId, req.params.id), eq(projectMembers.userId, req.params.userId)));
+      .where(and(eq(projectMembers.projectId, req.params.id as string), eq(projectMembers.userId, req.params.userId as string)));
     res.status(204).end();
   } catch (e) {
     next(e);

@@ -18,12 +18,12 @@ async function seed() {
 
   const [project] = await db
     .insert(projects)
-    .values({ name: "Sample Project", description: "A seeded sample project", createdBy: admin.id })
+    .values({ name: "Sample Project", description: "A seeded sample project", createdBy: admin!.id })
     .returning();
 
   await db.insert(projectMembers).values([
-    { projectId: project.id, userId: admin.id, role: "admin" },
-    { projectId: project.id, userId: member.id, role: "member" },
+    { projectId: project!.id, userId: admin!.id, role: "admin" },
+    { projectId: project!.id, userId: member!.id, role: "member" },
   ]);
 
   console.log("Seeded: admin@test.com / admin123, member@test.com / member123");
