@@ -1,11 +1,14 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth } from "@/features/auth/auth-context";
+import {
+	createProject as apiCreateProject,
+	listProjects,
+} from "@/features/projects/api";
 
 type Project = {
 	id: string;
@@ -19,28 +22,18 @@ export function ProjectList() {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState("");
 	const [showForm, setShowForm] = useState(false);
-	const { token, logout } = useAuth();
-	const navigate = useNavigate();
 
 	const fetchProjects = useCallback(async () => {
 		setLoading(true);
 		try {
-			const res = await fetch("http://localhost:8000/api/projects", {
-				headers: { Authorization: `Bearer ${token}` },
-			});
-			if (res.status === 401) {
-				logout();
-				navigate({ to: "/login" });
-				return;
-			}
-			const data = await res.json();
+			const data = await listProjects();
 			setProjects(data.projects);
 		} catch {
 			setError("Failed to load projects");
 		} finally {
 			setLoading(false);
 		}
-	}, [token, logout, navigate]);
+	}, []);
 
 	useEffect(() => {
 		fetchProjects();
@@ -114,7 +107,6 @@ function ProjectForm({
 	const [description, setDescription] = useState("");
 	const [error, setError] = useState("");
 	const [submitting, setSubmitting] = useState(false);
-	const { token } = useAuth();
 
 	async function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
@@ -125,15 +117,7 @@ function ProjectForm({
 		setError("");
 		setSubmitting(true);
 		try {
-			const res = await fetch("http://localhost:8000/api/projects", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: `Bearer ${token}`,
-				},
-				body: JSON.stringify({ name, description: description || undefined }),
-			});
-			if (!res.ok) throw new Error("Failed to create project");
+			await apiCreateProject(name, description || undefined);
 			onCreated();
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Failed to create project");

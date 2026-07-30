@@ -11,28 +11,17 @@ export function RegisterForm() {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [error, setError] = useState("");
-	const [loading, setLoading] = useState(false);
-	const { login } = useAuth();
+	const { register } = useAuth();
 	const navigate = useNavigate();
 
 	async function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
 		setError("");
-		setLoading(true);
 		try {
-			const res = await fetch("http://localhost:8000/api/auth/register", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ email, password, name }),
-			});
-			const data = await res.json();
-			if (!res.ok) throw new Error(data.error);
-			login(data.user, data.token);
+			await register(name, email, password);
 			navigate({ to: "/projects" });
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Registration failed");
-		} finally {
-			setLoading(false);
 		}
 	}
 
@@ -78,8 +67,8 @@ export function RegisterForm() {
 								minLength={8}
 							/>
 						</div>
-						<Button type="submit" className="w-full" disabled={loading}>
-							{loading ? "Registering..." : "Register"}
+						<Button type="submit" className="w-full">
+							Register
 						</Button>
 						<p className="text-center text-sm text-muted-foreground">
 							Already have an account?{" "}

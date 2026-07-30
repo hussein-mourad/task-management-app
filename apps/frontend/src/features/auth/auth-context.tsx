@@ -3,8 +3,13 @@ import {
 	type ReactNode,
 	useCallback,
 	useContext,
+	useEffect,
 	useState,
 } from "react";
+import {
+	login as apiLogin,
+	register as apiRegister,
+} from "@/features/auth/api";
 
 type User = {
 	id: string;
@@ -16,7 +21,8 @@ type User = {
 type AuthContextType = {
 	user: User | null;
 	token: string | null;
-	login: (user: User, token: string) => void;
+	login: (email: string, password: string) => Promise<void>;
+	register: (name: string, email: string, password: string) => Promise<void>;
 	logout: () => void;
 	isLoading: boolean;
 };
@@ -37,9 +43,9 @@ function loadAuth(): { user: User | null; token: string | null } {
 export function AuthProvider({ children }: { children: ReactNode }) {
 	const [user, setUser] = useState<User | null>(loadAuth().user);
 	const [token, setToken] = useState<string | null>(loadAuth().token);
-	const [isLoading] = useState(false);
+	const [isLoading, setIsLoading] = useState(false);
 
-	const login = useCallback((user: User, token: string) => {
+	const setAuth = useCallback((user: User, token: string) => {
 		setUser(user);
 		setToken(token);
 		localStorage.setItem("user", JSON.stringify(user));
@@ -53,8 +59,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		localStorage.removeItem("token");
 	}, []);
 
+	const login = useCallback(
+		async (email: string, password: string) => {
+			setIsLoading(true);
+			try {
+				const data = await apiLogin(email, password);
+				setAuth(data.user, data.token);
+			} finally {
+				setIsLoading(false);
+			}
+		},
+		[setAuth],
+	);
+
+	const register = useCallback(
+		async (name: string, email: string, password: string) => {
+			setIsLoading(true);
+			try {
+				const data = await apiRegister(name, email, password);
+				setAuth(data.user, data.token);
+			} finally {
+				setIsLoading(false);
+			}
+		},
+		[setAuth],
+	);
+
+	useEffect(() => {
+		const onForceLogout = () => logout();
+		window.addEventListener("auth:logout", onForceLogout);
+		return () => window.removeEventListener("auth:logout", onForceLogout);
+	}, [logout]);
+
 	return (
-		<AuthContext.Provider value={{ user, token, login, logout, isLoading }}>
+		<AuthContext.Provider
+			value={{ user, token, login, register, logout, isLoading }}
+		>
 			{children}
 		</AuthContext.Provider>
 	);

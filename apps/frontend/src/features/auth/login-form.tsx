@@ -10,28 +10,17 @@ export function LoginForm() {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [error, setError] = useState("");
-	const [loading, setLoading] = useState(false);
 	const { login } = useAuth();
 	const navigate = useNavigate();
 
 	async function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
 		setError("");
-		setLoading(true);
 		try {
-			const res = await fetch("http://localhost:8000/api/auth/login", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ email, password }),
-			});
-			const data = await res.json();
-			if (!res.ok) throw new Error(data.error);
-			login(data.user, data.token);
+			await login(email, password);
 			navigate({ to: "/projects" });
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Login failed");
-		} finally {
-			setLoading(false);
 		}
 	}
 
@@ -66,8 +55,8 @@ export function LoginForm() {
 								required
 							/>
 						</div>
-						<Button type="submit" className="w-full" disabled={loading}>
-							{loading ? "Logging in..." : "Login"}
+						<Button type="submit" className="w-full">
+							Login
 						</Button>
 						<p className="text-center text-sm text-muted-foreground">
 							Don't have an account?{" "}

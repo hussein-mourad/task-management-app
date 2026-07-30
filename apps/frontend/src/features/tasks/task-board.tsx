@@ -1,4 +1,3 @@
-import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,7 +11,8 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { useAuth } from "@/features/auth/auth-context";
+import { getProject } from "@/features/projects/api";
+import { createTask as apiCreateTask, listTasks } from "@/features/tasks/api";
 
 type Task = {
 	id: string;
@@ -42,32 +42,18 @@ export function TaskBoard({ projectId }: { projectId: string }) {
 		priority: "",
 		assignee: "",
 	});
-	const { token, logout } = useAuth();
-	const navigate = useNavigate();
 
 	const fetchData = useCallback(async () => {
-		const headers = { Authorization: `Bearer ${token}` };
 		setLoading(true);
 		try {
-			const params = new URLSearchParams();
-			if (filter.status) params.set("status", filter.status);
-			if (filter.priority) params.set("priority", filter.priority);
-			if (filter.assignee) params.set("assignee", filter.assignee);
-
-			const [projectRes, tasksRes] = await Promise.all([
-				fetch(`http://localhost:8000/api/projects/${projectId}`, { headers }),
-				fetch(
-					`http://localhost:8000/api/projects/${projectId}/tasks?${params}`,
-					{ headers },
-				),
+			const [pData, tData] = await Promise.all([
+				getProject(projectId),
+				listTasks(projectId, {
+					status: filter.status || undefined,
+					priority: filter.priority || undefined,
+					assignee: filter.assignee || undefined,
+				}),
 			]);
-			if (projectRes.status === 401) {
-				logout();
-				navigate({ to: "/login" });
-				return;
-			}
-			const pData = await projectRes.json();
-			const tData = await tasksRes.json();
 			setProject(pData.project);
 			setTasks(tData.tasks);
 		} catch {
@@ -75,7 +61,7 @@ export function TaskBoard({ projectId }: { projectId: string }) {
 		} finally {
 			setLoading(false);
 		}
-	}, [projectId, filter, token, logout, navigate]);
+	}, [projectId, filter.status, filter.priority, filter.assignee]);
 
 	useEffect(() => {
 		fetchData();
@@ -227,7 +213,6 @@ function TaskForm({
 	const [dueDate, setDueDate] = useState("");
 	const [error, setError] = useState("");
 	const [submitting, setSubmitting] = useState(false);
-	const { token } = useAuth();
 
 	async function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
@@ -238,21 +223,12 @@ function TaskForm({
 		setError("");
 		setSubmitting(true);
 		try {
-			const body: Record<string, unknown> = { title, priority };
-			if (description.trim()) body.description = description;
-			if (dueDate) body.dueDate = new Date(dueDate).toISOString();
-			const res = await fetch(
-				`http://localhost:8000/api/projects/${projectId}/tasks`,
-				{
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-						Authorization: `Bearer ${token}`,
-					},
-					body: JSON.stringify(body),
-				},
-			);
-			if (!res.ok) throw new Error("Failed to create task");
+			await apiCreateTask(projectId, {
+				title,
+				priority,
+				description: description.trim() || undefined,
+				dueDate: dueDate ? new Date(dueDate).toISOString() : null,
+			});
 			onCreated();
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Failed to create task");
