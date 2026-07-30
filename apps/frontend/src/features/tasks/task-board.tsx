@@ -1,3 +1,14 @@
+import {
+	DndContext,
+	type DragEndEvent,
+	DragOverlay,
+	type DragStartEvent,
+	PointerSensor,
+	useDraggable,
+	useDroppable,
+	useSensor,
+	useSensors,
+} from "@dnd-kit/core";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil } from "lucide-react";
@@ -83,6 +94,12 @@ export function TaskBoard({ projectId }: { projectId: string }) {
 		assignee: "",
 	});
 	const [showForm, setShowForm] = useState(false);
+	const [activeTask, setActiveTask] = useState<Task | null>(null);
+	const [dragError, setDragError] = useState<string | null>(null);
+
+	const sensors = useSensors(
+		useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+	);
 
 	const projectQuery = useQuery({
 		queryKey: ["project", projectId],
@@ -122,6 +139,62 @@ export function TaskBoard({ projectId }: { projectId: string }) {
 		mutationFn: (taskId: string) => apiDeleteTask(projectId, taskId),
 		onSuccess: () => invalidate(),
 	});
+
+	const dragMutation = useMutation({
+		mutationFn: ({ taskId, status }: { taskId: string; status: string }) =>
+			apiUpdateTask(projectId, taskId, { status }),
+		onMutate: async ({ taskId, status }) => {
+			await queryClient.cancelQueries({
+				queryKey: ["tasks", projectId],
+			});
+			const prevData = queryClient.getQueryData<Task[]>([
+				"tasks",
+				projectId,
+				filter,
+			]);
+			queryClient.setQueryData<Task[]>(["tasks", projectId, filter], (old) =>
+				old?.map((t) => (t.id === taskId ? { ...t, status } : t)),
+			);
+			return { prevData };
+		},
+		onError: (_err, _vars, context) => {
+			if (context?.prevData) {
+				queryClient.setQueryData(
+					["tasks", projectId, filter],
+					context.prevData,
+				);
+			}
+			setDragError("Failed to update task status");
+			setTimeout(() => setDragError(null), 3000);
+		},
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
+		},
+	});
+
+	const handleDragStart = useCallback(
+		(event: DragStartEvent) => {
+			const task = tasksQuery.data?.find((t: Task) => t.id === event.active.id);
+			setActiveTask(task ?? null);
+		},
+		[tasksQuery.data],
+	);
+
+	const handleDragEnd = useCallback(
+		(event: DragEndEvent) => {
+			setActiveTask(null);
+			const { active, over } = event;
+			if (!over || active.id === over.id) return;
+			const taskStatus = active.data.current?.status as string;
+			const newStatus = over.id as string;
+			if (taskStatus === newStatus) return;
+			dragMutation.mutate({
+				taskId: active.id as string,
+				status: newStatus,
+			});
+		},
+		[dragMutation],
+	);
 
 	if (projectQuery.isLoading || tasksQuery.isLoading) {
 		return <div className="p-8 text-muted-foreground">Loading...</div>;
@@ -234,33 +307,108 @@ export function TaskBoard({ projectId }: { projectId: string }) {
 				/>
 			)}
 
+			{dragError && (
+				<div className="mb-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+					{dragError}
+				</div>
+			)}
+
 			{tasks.length === 0 ? (
 				<div className="rounded-lg border border-dashed p-12 text-center text-muted-foreground">
 					No tasks yet
 				</div>
 			) : (
-				<div className="grid gap-4 md:grid-cols-3">
-					{columns.map((col) => (
-						<div key={col} className="rounded-lg border bg-muted/50 p-4">
-							<h2 className="mb-3 font-semibold text-muted-foreground">
-								{columnLabels[col]}
-							</h2>
-							<div className="space-y-2">
-								{tasks
-									.filter((t) => t.status === col)
-									.map((task) => (
-										<TaskCard
-											key={task.id}
-											task={task}
-											projectId={projectId}
-											onDelete={() => deleteMutation.mutate(task.id)}
-										/>
-									))}
+				<DndContext
+					sensors={sensors}
+					onDragStart={handleDragStart}
+					onDragEnd={handleDragEnd}
+				>
+					<div className="grid gap-4 md:grid-cols-3">
+						{columns.map((col) => (
+							<DroppableColumn
+								key={col}
+								id={col}
+								label={columnLabels[col]}
+								tasks={tasks.filter((t) => t.status === col)}
+								projectId={projectId}
+								onDelete={(taskId) => deleteMutation.mutate(taskId)}
+							/>
+						))}
+					</div>
+					<DragOverlay>
+						{activeTask ? (
+							<div className="opacity-80">
+								<TaskCard
+									task={activeTask}
+									projectId={projectId}
+									onDelete={() => {}}
+								/>
 							</div>
-						</div>
-					))}
-				</div>
+						) : null}
+					</DragOverlay>
+				</DndContext>
 			)}
+		</div>
+	);
+}
+
+function DroppableColumn({
+	id,
+	label,
+	tasks,
+	projectId,
+	onDelete,
+}: {
+	id: string;
+	label: string;
+	tasks: Task[];
+	projectId: string;
+	onDelete: (taskId: string) => void;
+}) {
+	const { setNodeRef, isOver } = useDroppable({ id });
+
+	return (
+		<div
+			ref={setNodeRef}
+			className={`rounded-lg border p-4 ${isOver ? "bg-accent ring-2 ring-primary" : "bg-muted/50"}`}
+		>
+			<h2 className="mb-3 font-semibold text-muted-foreground">{label}</h2>
+			<div className="space-y-2">
+				{tasks.map((task) => (
+					<DraggableTaskCard
+						key={task.id}
+						task={task}
+						projectId={projectId}
+						onDelete={() => onDelete(task.id)}
+					/>
+				))}
+			</div>
+		</div>
+	);
+}
+
+function DraggableTaskCard({
+	task,
+	projectId,
+	onDelete,
+}: {
+	task: Task;
+	projectId: string;
+	onDelete: () => void;
+}) {
+	const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+		id: task.id,
+		data: { task, status: task.status },
+	});
+
+	return (
+		<div
+			ref={setNodeRef}
+			{...listeners}
+			{...attributes}
+			className={`cursor-grab active:cursor-grabbing ${isDragging ? "opacity-50" : ""}`}
+		>
+			<TaskCard task={task} projectId={projectId} onDelete={onDelete} />
 		</div>
 	);
 }

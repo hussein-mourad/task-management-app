@@ -39,7 +39,7 @@ function ProjectDetail() {
 				<div className="flex items-start justify-between">
 					<div>
 						<div className="flex items-center gap-2">
-							<h1 className="text-2xl font-bold">{project.name}</h1>
+							<h1 className="text-xl font-bold">{project.name}</h1>
 							{isAdmin ? (
 								<Badge>admin</Badge>
 							) : (
@@ -47,7 +47,7 @@ function ProjectDetail() {
 							)}
 						</div>
 						{project.description && (
-							<p className="mt-1 text-muted-foreground">
+							<p className="text-sm mt-1 text-muted-foreground">
 								{project.description}
 							</p>
 						)}

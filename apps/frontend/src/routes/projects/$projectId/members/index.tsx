@@ -35,7 +35,7 @@ function ProjectMembersPage() {
 							<Link
 								to="/projects/$projectId"
 								params={{ projectId }}
-								className="text-sm text-muted-foreground hover:text-foreground"
+								className="text-xl font-bold text-muted-foreground hover:text-foreground"
 							>
 								{project.name}
 							</Link>
@@ -52,7 +52,9 @@ function ProjectMembersPage() {
 					)}
 				</div>
 				{project.description && (
-					<p className="mt-1 text-muted-foreground">{project.description}</p>
+					<p className="text-sm mt-1 text-muted-foreground">
+						{project.description}
+					</p>
 				)}
 			</div>
 			<div className="p-8">
