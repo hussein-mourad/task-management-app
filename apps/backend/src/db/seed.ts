@@ -3,7 +3,7 @@ import { db } from ".";
 import { users, projects, projectMembers, tasks } from "./schema";
 import { hashPassword } from "@/features/auth/auth.service";
 
-function pick<T>(arr: T[]): T {
+function pick<T>(arr: readonly T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]!;
 }
 
@@ -51,7 +51,6 @@ async function seed() {
     )
     .returning();
 
-  const [admin, alice, bob] = createdUsers;
   console.log(`  ✓ ${createdUsers.length} users created`);
 
   console.log("Creating 500 projects (50 per user)...");
@@ -59,8 +58,6 @@ async function seed() {
   const memberValues: { projectId: string; userId: string; role: string }[] = [];
 
   for (const user of createdUsers) {
-    const otherUsers = createdUsers.filter((u) => u.id !== user.id);
-
     for (let i = 0; i < 50; i++) {
       projectValues.push({
         name: `${faker.company.buzzNoun()} ${faker.company.buzzVerb()} ${faker.company.buzzAdjective()}`,
@@ -114,16 +111,16 @@ async function seed() {
     () => `Required for the upcoming ${faker.hacker.adjective()} release. The ${faker.hacker.noun()} team has requested ${faker.hacker.verb()} capabilities to be added before the ${faker.hacker.adjective()} deadline.`,
   ];
 
+  const assignees = createdUsers.map((u) => u.id);
   for (const project of createdProjects) {
-    const assignees = createdUsers.map((u) => u.id);
     const creator = pick(createdUsers);
 
     for (let i = 0; i < 50; i++) {
       const status = (() => {
         const r = Math.random();
-        if (r < 0.4) return "todo";
-        if (r < 0.75) return "in_progress";
-        return "done";
+        if (r < 0.4) return statuses[0];
+        if (r < 0.75) return statuses[1];
+        return statuses[2];
       })();
 
       taskValues.push({
@@ -131,7 +128,7 @@ async function seed() {
         title: pick(taskTemplates)(),
         description: Math.random() > 0.2 ? pick(descriptionTemplates)() : null,
         status,
-        priority: pick([...priorities]),
+        priority: pick(priorities),
         dueDate: Math.random() > 0.3 ? randomDate(30) : null,
         createdBy: creator.id,
         assignedTo: Math.random() > 0.15 ? pick(assignees) : null,
