@@ -249,5 +249,6 @@ volumes:
 
 1. Pagination, sorting, and search on tasks endpoint
 2. Docker Compose including backend service
-3. API documentation (Swagger/OpenAPI)
-4. Audit log for task status changes
+3. Audit log for task status changes
+4. Real-time task updates (WebSockets)
+5. Deployment to a publicly accessible environment
