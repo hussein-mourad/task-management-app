@@ -1,9 +1,9 @@
 import { Router, type Request, type Response, type NextFunction } from "express";
-import { db } from "../../db";
-import { projects, projectMembers } from "../../db/schema";
+import { db } from "@/db";
+import { projects, projectMembers } from "@/db/schema";
 import { createProjectSchema, updateProjectSchema, addMemberSchema } from "./projects.validator";
-import { requireAuth } from "../auth/auth.middleware";
-import { AppError } from "../../middleware/errors";
+import { requireAuth } from "@/features/auth/auth.middleware";
+import { AppError } from "@/middleware/errors";
 import { eq, and, inArray } from "drizzle-orm";
 
 export const projectsRouter = Router();

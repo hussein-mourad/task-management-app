@@ -1,10 +1,10 @@
 import express from "express";
 import cors from "cors";
-import { env } from "./config";
-import { errorHandler } from "./middleware/errors";
-import { authRouter } from "./features/auth/auth.routes";
-import { projectsRouter } from "./features/projects/projects.routes";
-import { tasksRouter } from "./features/tasks/tasks.routes";
+import { env } from "@/config";
+import { errorHandler } from "@/middleware/errors";
+import { authRouter } from "@/features/auth/auth.routes";
+import { projectsRouter } from "@/features/projects/projects.routes";
+import { tasksRouter } from "@/features/tasks/tasks.routes";
 
 export const app = express();
 

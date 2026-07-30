@@ -1,10 +1,10 @@
 import { Router } from "express";
-import { db } from "../../db";
-import { users } from "../../db/schema";
+import { db } from "@/db";
+import { users } from "@/db/schema";
 import { hashPassword, verifyPassword, signToken } from "./auth.service";
 import { registerSchema, loginSchema } from "./auth.validator";
 import { requireAuth } from "./auth.middleware";
-import { AppError } from "../../middleware/errors";
+import { AppError } from "@/middleware/errors";
 import { eq } from "drizzle-orm";
 
 export const authRouter = Router();

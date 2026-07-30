@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { verifyToken } from "./auth.service";
-import { AppError } from "../../middleware/errors";
+import { AppError } from "@/middleware/errors";
 
 declare global {
   namespace Express {

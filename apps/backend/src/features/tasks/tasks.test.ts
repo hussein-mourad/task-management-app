@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import request from "supertest";
-import { app } from "../../app";
+import { app } from "@/app";
 
 describe("Tasks", () => {
   let token: string;

@@ -1,9 +1,9 @@
 import { Router, type Request, type Response, type NextFunction } from "express";
-import { db } from "../../db";
-import { tasks, projectMembers } from "../../db/schema";
+import { db } from "@/db";
+import { tasks, projectMembers } from "@/db/schema";
 import { createTaskSchema, updateTaskSchema } from "./tasks.validator";
-import { requireAuth } from "../auth/auth.middleware";
-import { AppError } from "../../middleware/errors";
+import { requireAuth } from "@/features/auth/auth.middleware";
+import { AppError } from "@/middleware/errors";
 import { eq, and } from "drizzle-orm";
 
 export const tasksRouter = Router({ mergeParams: true });
