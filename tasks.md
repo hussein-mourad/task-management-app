@@ -1,10 +1,10 @@
 # Tasks
 
 - [x] Use node-postgres db driver instead of postgres.js
-- [ ] Use shadcn with dark mode support
-- [ ] Use src/db/migrations for migrations
-- [ ] Use src/schema/ for db schema instead of feature based routing (for db schema only)
-- [ ] Use relations for db
+- [x] Use shadcn with dark mode support
+- [x] Use src/db/migrations for migrations
+- [x] Use src/schema/ for db schema instead of feature based routing (for db schema only)
+- [x] Use relations for db
 - [ ] error loading dynamically imported module: "http://localhost:3000/src/routes/projects/$projectId/index.tsx?tsr-split=component"
 - [ ] Import alias for all imports instead of absolute path imports
 - [ ] Improve seed script (add more data)

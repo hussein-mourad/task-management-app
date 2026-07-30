@@ -1,7 +1,6 @@
-import { db } from "../lib/db";
-import { users } from "../features/auth/auth.schema";
+import { db } from ".";
+import { users, projects, projectMembers } from "./schema";
 import { hashPassword } from "../features/auth/auth.service";
-import { projects, projectMembers } from "../features/projects/projects.schema";
 
 async function seed() {
   const adminHash = await hashPassword("admin123");

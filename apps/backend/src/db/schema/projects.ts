@@ -1,6 +1,6 @@
 import { pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-core";
 import { createId } from "@paralleldrive/cuid2";
-import { users } from "../auth/auth.schema";
+import { users } from "./auth";
 
 export const projects = pgTable("projects", {
   id: text()

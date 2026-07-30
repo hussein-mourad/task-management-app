@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db } from "../../lib/db";
-import { users } from "./auth.schema";
+import { db } from "../../db";
+import { users } from "../../db/schema";
 import { hashPassword, verifyPassword, signToken } from "./auth.service";
 import { registerSchema, loginSchema } from "./auth.validator";
 import { requireAuth } from "./auth.middleware";

@@ -1,6 +1,6 @@
 import { Router, type Request, type Response, type NextFunction } from "express";
-import { db } from "../../lib/db";
-import { projects, projectMembers } from "./projects.schema";
+import { db } from "../../db";
+import { projects, projectMembers } from "../../db/schema";
 import { createProjectSchema, updateProjectSchema, addMemberSchema } from "./projects.validator";
 import { requireAuth } from "../auth/auth.middleware";
 import { AppError } from "../../middleware/errors";
