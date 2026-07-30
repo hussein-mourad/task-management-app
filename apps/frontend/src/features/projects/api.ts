@@ -39,3 +39,15 @@ export async function updateProject(
 export async function deleteProject(id: string) {
 	await api.delete(`/api/projects/${id}`);
 }
+
+export async function addMember(projectId: string, userId: string) {
+	const { data } = await api.post<{ message: string }>(
+		`/api/projects/${projectId}/members`,
+		{ userId },
+	);
+	return data;
+}
+
+export async function removeMember(projectId: string, userId: string) {
+	await api.delete(`/api/projects/${projectId}/members/${userId}`);
+}

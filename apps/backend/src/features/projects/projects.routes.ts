@@ -1,6 +1,6 @@
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { db } from "@/db";
-import { projects, projectMembers, users } from "@/db/schema";
+import { projects, projectMembers, tasks, users } from "@/db/schema";
 import { createProjectSchema, updateProjectSchema, addMemberSchema } from "./projects.validator";
 import { requireAuth } from "@/features/auth/auth.middleware";
 import { AppError } from "@/middleware/errors";
@@ -82,7 +82,7 @@ projectsRouter.get("/:id", requireProjectAccess, async (req, res, next) => {
 projectsRouter.get("/:id/members", requireProjectAccess, async (req, res, next) => {
   try {
     const rows = await db
-      .select({ id: users.id, name: users.name, email: users.email })
+      .select({ id: users.id, name: users.name, email: users.email, role: projectMembers.role })
       .from(projectMembers)
       .innerJoin(users, eq(projectMembers.userId, users.id))
       .where(eq(projectMembers.projectId, req.params.id as string));
@@ -104,7 +104,10 @@ projectsRouter.put("/:id", requireProjectAdmin, async (req, res, next) => {
 
 projectsRouter.delete("/:id", requireProjectAdmin, async (req, res, next) => {
   try {
-    await db.delete(projects).where(eq(projects.id, req.params.id as string));
+    const projectId = req.params.id as string;
+    await db.delete(projectMembers).where(eq(projectMembers.projectId, projectId));
+    await db.delete(tasks).where(eq(tasks.projectId, projectId));
+    await db.delete(projects).where(eq(projects.id, projectId));
     res.status(204).end();
   } catch (e) {
     next(e);
@@ -114,7 +117,14 @@ projectsRouter.delete("/:id", requireProjectAdmin, async (req, res, next) => {
 projectsRouter.post("/:id/members", requireProjectAdmin, async (req, res, next) => {
   try {
     const data = addMemberSchema.parse(req.body);
-    await db.insert(projectMembers).values({ projectId: req.params.id as string, userId: data.userId });
+    const projectId = req.params.id as string;
+    const [existing] = await db
+      .select()
+      .from(projectMembers)
+      .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, data.userId)))
+      .limit(1);
+    if (existing) throw new AppError(409, "User is already a member of this project");
+    await db.insert(projectMembers).values({ projectId, userId: data.userId });
     res.status(201).json({ message: "Member added" });
   } catch (e) {
     next(e);
@@ -123,9 +133,18 @@ projectsRouter.post("/:id/members", requireProjectAdmin, async (req, res, next) 
 
 projectsRouter.delete("/:id/members/:userId", requireProjectAdmin, async (req, res, next) => {
   try {
+    const projectId = req.params.id as string;
+    const userId = req.params.userId as string;
+    const admins = await db
+      .select()
+      .from(projectMembers)
+      .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.role, "admin")));
+    if (admins.length <= 1 && admins.some((a) => a.userId === userId)) {
+      throw new AppError(400, "Cannot remove the last admin from the project");
+    }
     await db
       .delete(projectMembers)
-      .where(and(eq(projectMembers.projectId, req.params.id as string), eq(projectMembers.userId, req.params.userId as string)));
+      .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, userId)));
     res.status(204).end();
   } catch (e) {
     next(e);

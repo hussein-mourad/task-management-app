@@ -1,15 +1,14 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-	createProject as apiCreateProject,
-	listProjects,
-} from "@/features/projects/api";
+import { createProject as apiCreateProject } from "@/features/projects/api";
+import { useProjects } from "@/features/projects/hooks";
 
 type Project = {
 	id: string;
@@ -19,30 +18,14 @@ type Project = {
 };
 
 export function ProjectList() {
-	const [projects, setProjects] = useState<Project[]>([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState("");
+	const { data: projects, isLoading, error } = useProjects();
+	const queryClient = useQueryClient();
 	const [showForm, setShowForm] = useState(false);
 
-	const fetchProjects = useCallback(async () => {
-		setLoading(true);
-		try {
-			const data = await listProjects();
-			setProjects(data.projects);
-		} catch {
-			setError("Failed to load projects");
-		} finally {
-			setLoading(false);
-		}
-	}, []);
-
-	useEffect(() => {
-		fetchProjects();
-	}, [fetchProjects]);
-
-	if (loading)
+	if (isLoading)
 		return <div className="p-8 text-muted-foreground">Loading projects...</div>;
-	if (error) return <div className="p-8 text-destructive">{error}</div>;
+	if (error)
+		return <div className="p-8 text-destructive">Failed to load projects</div>;
 
 	return (
 		<div className="p-8">
@@ -55,11 +38,11 @@ export function ProjectList() {
 					onClose={() => setShowForm(false)}
 					onCreated={() => {
 						setShowForm(false);
-						fetchProjects();
+						queryClient.invalidateQueries({ queryKey: ["projects"] });
 					}}
 				/>
 			)}
-			{projects.length === 0 ? (
+			{!projects || projects.length === 0 ? (
 				<EmptyState message="No projects yet. Create your first project!" />
 			) : (
 				<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

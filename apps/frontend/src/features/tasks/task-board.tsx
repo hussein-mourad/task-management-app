@@ -169,65 +169,60 @@ export function TaskBoard({ projectId }: { projectId: string }) {
 
 	return (
 		<div className="p-8">
-			<div className="mb-6 flex items-center justify-between">
-				<div>
-					<h1 className="text-2xl font-bold">{project.name}</h1>
-					{project.description && (
-						<p className="text-muted-foreground">{project.description}</p>
-					)}
+			<div className="mb-4 flex items-center justify-between gap-2">
+				<div className="flex gap-2">
+					<Select
+						value={filter.status}
+						onValueChange={(value) =>
+							setFilter((f) => ({ ...f, status: value }))
+						}
+					>
+						<SelectTrigger className="w-[150px]">
+							<SelectValue placeholder="All statuses">
+								{(value: string) =>
+									value
+										? (statusOptions.find((o) => o.value === value)?.label ??
+											value)
+										: "All statuses"
+								}
+							</SelectValue>
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="">All statuses</SelectItem>
+							{statusOptions.map((o) => (
+								<SelectItem key={o.value} value={o.value}>
+									{o.label}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+					<Select
+						value={filter.priority}
+						onValueChange={(value) =>
+							setFilter((f) => ({ ...f, priority: value }))
+						}
+					>
+						<SelectTrigger className="w-[150px]">
+							<SelectValue placeholder="All priorities">
+								{(value: string) =>
+									value
+										? (priorityOptions.find((o) => o.value === value)?.label ??
+											value)
+										: "All priorities"
+								}
+							</SelectValue>
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="">All priorities</SelectItem>
+							{priorityOptions.map((o) => (
+								<SelectItem key={o.value} value={o.value}>
+									{o.label}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
 				</div>
 				<Button onClick={() => setShowForm(true)}>New Task</Button>
-			</div>
-
-			<div className="mb-4 flex gap-2">
-				<Select
-					value={filter.status}
-					onValueChange={(value) => setFilter((f) => ({ ...f, status: value }))}
-				>
-					<SelectTrigger className="w-[150px]">
-						<SelectValue placeholder="All statuses">
-							{(value: string) =>
-								value
-									? (statusOptions.find((o) => o.value === value)?.label ??
-										value)
-									: "All statuses"
-							}
-						</SelectValue>
-					</SelectTrigger>
-					<SelectContent>
-						<SelectItem value="">All statuses</SelectItem>
-						{statusOptions.map((o) => (
-							<SelectItem key={o.value} value={o.value}>
-								{o.label}
-							</SelectItem>
-						))}
-					</SelectContent>
-				</Select>
-				<Select
-					value={filter.priority}
-					onValueChange={(value) =>
-						setFilter((f) => ({ ...f, priority: value }))
-					}
-				>
-					<SelectTrigger className="w-[150px]">
-						<SelectValue placeholder="All priorities">
-							{(value: string) =>
-								value
-									? (priorityOptions.find((o) => o.value === value)?.label ??
-										value)
-									: "All priorities"
-							}
-						</SelectValue>
-					</SelectTrigger>
-					<SelectContent>
-						<SelectItem value="">All priorities</SelectItem>
-						{priorityOptions.map((o) => (
-							<SelectItem key={o.value} value={o.value}>
-								{o.label}
-							</SelectItem>
-						))}
-					</SelectContent>
-				</Select>
 			</div>
 
 			{showForm && (
