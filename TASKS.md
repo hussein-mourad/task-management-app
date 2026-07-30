@@ -10,7 +10,7 @@
 - [ ] Improve seed script (add more data)
 - [x] Use biome for backend
 - [x] Use axios client for frontend
-- [ ] Use params in links
+- [x] Use params in links
 - [ ] Cannot edit task, Use dnd for status
 - [ ] Cannot edit task details
 - [ ] No members based access on frontend

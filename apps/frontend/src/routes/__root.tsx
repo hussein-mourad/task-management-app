@@ -1,4 +1,5 @@
 import { TanStackDevtools } from "@tanstack/react-devtools";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
 	createRootRoute,
 	HeadContent,
@@ -12,6 +13,16 @@ import { Button } from "@/components/ui/button";
 import { AuthProvider, useAuth } from "@/features/auth/auth-context";
 
 import appCss from "@/styles.css?url";
+
+const queryClient = new QueryClient({
+	defaultOptions: {
+		queries: {
+			staleTime: 30_000,
+			retry: 1,
+			refetchOnWindowFocus: true,
+		},
+	},
+});
 
 export const Route = createRootRoute({
 	head: () => ({
@@ -54,9 +65,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				<HeadContent />
 			</head>
 			<body>
-				<AuthProvider>
-					<Layout>{children}</Layout>
-				</AuthProvider>
+				<QueryClientProvider client={queryClient}>
+					<AuthProvider>
+						<Layout>{children}</Layout>
+					</AuthProvider>
+				</QueryClientProvider>
 				<TanStackDevtools
 					config={{ position: "bottom-right", hideUntilHover: true }}
 					plugins={[

@@ -6,10 +6,6 @@ import {
 	useEffect,
 	useState,
 } from "react";
-import {
-	login as apiLogin,
-	register as apiRegister,
-} from "@/features/auth/api";
 
 type User = {
 	id: string;
@@ -21,8 +17,7 @@ type User = {
 type AuthContextType = {
 	user: User | null;
 	token: string | null;
-	login: (email: string, password: string) => Promise<void>;
-	register: (name: string, email: string, password: string) => Promise<void>;
+	setAuth: (user: User, token: string) => void;
 	logout: () => void;
 	isLoading: boolean;
 };
@@ -48,6 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const setAuth = useCallback((user: User, token: string) => {
 		setUser(user);
 		setToken(token);
+		setIsLoading(false);
 		localStorage.setItem("user", JSON.stringify(user));
 		localStorage.setItem("token", token);
 	}, []);
@@ -55,35 +51,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const logout = useCallback(() => {
 		setUser(null);
 		setToken(null);
+		setIsLoading(false);
 		localStorage.removeItem("user");
 		localStorage.removeItem("token");
 	}, []);
-
-	const login = useCallback(
-		async (email: string, password: string) => {
-			setIsLoading(true);
-			try {
-				const data = await apiLogin(email, password);
-				setAuth(data.user, data.token);
-			} finally {
-				setIsLoading(false);
-			}
-		},
-		[setAuth],
-	);
-
-	const register = useCallback(
-		async (name: string, email: string, password: string) => {
-			setIsLoading(true);
-			try {
-				const data = await apiRegister(name, email, password);
-				setAuth(data.user, data.token);
-			} finally {
-				setIsLoading(false);
-			}
-		},
-		[setAuth],
-	);
 
 	useEffect(() => {
 		const onForceLogout = () => logout();
@@ -92,9 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	}, [logout]);
 
 	return (
-		<AuthContext.Provider
-			value={{ user, token, login, register, logout, isLoading }}
-		>
+		<AuthContext.Provider value={{ user, token, setAuth, logout, isLoading }}>
 			{children}
 		</AuthContext.Provider>
 	);

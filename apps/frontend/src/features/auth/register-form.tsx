@@ -1,28 +1,32 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import { z } from "zod";
+import { FormField, FormInput } from "@/components/form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useAuth } from "@/features/auth/auth-context";
+import { useRegister } from "@/features/auth/hooks";
+
+const registerSchema = z.object({
+	name: z.string().min(2, "Name must be at least 2 characters"),
+	email: z.string().email("Invalid email"),
+	password: z.string().min(8, "Password must be at least 8 characters"),
+});
+
+type RegisterData = z.infer<typeof registerSchema>;
 
 export function RegisterForm() {
-	const [name, setName] = useState("");
-	const [email, setEmail] = useState("");
-	const [password, setPassword] = useState("");
-	const [error, setError] = useState("");
-	const { register } = useAuth();
+	const form = useForm<RegisterData>({
+		resolver: zodResolver(registerSchema),
+		defaultValues: { name: "", email: "", password: "" },
+	});
+	const registerMutation = useRegister();
 	const navigate = useNavigate();
 
-	async function handleSubmit(e: React.FormEvent) {
-		e.preventDefault();
-		setError("");
-		try {
-			await register(name, email, password);
-			navigate({ to: "/projects" });
-		} catch (err) {
-			setError(err instanceof Error ? err.message : "Registration failed");
-		}
+	function onSubmit(data: RegisterData) {
+		registerMutation.mutate(data, {
+			onSuccess: () => navigate({ to: "/projects" }),
+		});
 	}
 
 	return (
@@ -32,54 +36,56 @@ export function RegisterForm() {
 					<CardTitle>Register</CardTitle>
 				</CardHeader>
 				<CardContent>
-					<form onSubmit={handleSubmit} className="space-y-4">
-						{error && <p className="text-sm text-destructive">{error}</p>}
-						<div className="space-y-2">
-							<Label htmlFor="name">Name</Label>
-							<Input
-								id="name"
-								placeholder="Your name"
-								value={name}
-								onChange={(e) => setName(e.target.value)}
-								required
-							/>
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="email">Email</Label>
-							<Input
-								id="email"
-								type="email"
-								placeholder="Email"
-								value={email}
-								onChange={(e) => setEmail(e.target.value)}
-								required
-							/>
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="password">Password</Label>
-							<Input
-								id="password"
-								type="password"
-								placeholder="Password (min 8 chars)"
-								value={password}
-								onChange={(e) => setPassword(e.target.value)}
-								required
-								minLength={8}
-							/>
-						</div>
-						<Button type="submit" className="w-full">
-							Register
-						</Button>
-						<p className="text-center text-sm text-muted-foreground">
-							Already have an account?{" "}
-							<Link
-								to="/login"
-								className="text-primary underline-offset-4 hover:underline"
+					<FormProvider {...form}>
+						<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+							{registerMutation.error && (
+								<p className="text-sm text-destructive">
+									{registerMutation.error.message}
+								</p>
+							)}
+							<FormField name="name" label="Name">
+								<FormInput
+									name="name"
+									placeholder="Your name"
+									required
+									minLength={2}
+								/>
+							</FormField>
+							<FormField name="email" label="Email">
+								<FormInput
+									name="email"
+									type="email"
+									placeholder="Email"
+									required
+								/>
+							</FormField>
+							<FormField name="password" label="Password">
+								<FormInput
+									name="password"
+									type="password"
+									placeholder="Password (min 8 chars)"
+									required
+									minLength={8}
+								/>
+							</FormField>
+							<Button
+								type="submit"
+								className="w-full"
+								disabled={registerMutation.isPending}
 							>
-								Login
-							</Link>
-						</p>
-					</form>
+								{registerMutation.isPending ? "Registering..." : "Register"}
+							</Button>
+							<p className="text-center text-sm text-muted-foreground">
+								Already have an account?{" "}
+								<Link
+									to="/login"
+									className="text-primary underline-offset-4 hover:underline"
+								>
+									Login
+								</Link>
+							</p>
+						</form>
+					</FormProvider>
 				</CardContent>
 			</Card>
 		</div>
