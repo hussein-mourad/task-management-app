@@ -2,34 +2,34 @@ import z from "zod";
 
 export const envSchema = z.object({
   // General
-  PORT: z.string().optional().default("8000"),
+  PORT: z.coerce.number().default(8000),
   BASE_URL: z.string().optional(),
 
   // Database
   DATABASE_URL: z.string(),
 
+  // Auth
+  JWT_SECRET: z.string().min(32),
+
   // Frontend
-  FRONTEND_URL: z.string(),
+  FRONTEND_URL: z.string().default("http://localhost:3000"),
 });
 
-export function validateEnv(config: Record<string, any>) {
+export function validateEnv(config: Record<string, unknown>) {
   try {
-    const result = envSchema.parse(config);
-    return result;
+    return envSchema.parse(config);
   } catch (error) {
-    const issues = (error as z.ZodError).issues.map((issue) => {
-      return `Field: ${issue.path.join(".")} - ${issue.message}`;
-    });
-    throw new Error(`Env validation error: \n${issues.join("\n")}`);
+    const issues = (error as z.ZodError).issues.map(
+      (issue) => `Field: ${issue.path.join(".")} - ${issue.message}`,
+    );
+    throw new Error(`Env validation error:\n${issues.join("\n")}`);
   }
 }
 
-const env = validateEnv(process.env);
+export const env = validateEnv(process.env);
 
 export type Env = z.infer<typeof envSchema>;
 export type EnvKeys = keyof Env;
-
-export default env;
 
 declare global {
   namespace NodeJS {

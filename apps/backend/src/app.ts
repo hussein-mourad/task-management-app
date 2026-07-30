@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { env } from "@/config";
+import { env } from "@/lib/env";
 import { errorHandler } from "@/middleware/errors";
 import { authRouter } from "@/features/auth/auth.routes";
 import { projectsRouter } from "@/features/projects/projects.routes";

@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { env } from "@/config";
+import { env } from "@/lib/env";
 
 const SALT_ROUNDS = 10;
 
