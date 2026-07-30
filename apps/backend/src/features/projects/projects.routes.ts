@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type Request, type Response, type NextFunction } from "express";
 import { db } from "../../lib/db";
 import { projects, projectMembers } from "./projects.schema";
 import { createProjectSchema, updateProjectSchema, addMemberSchema } from "./projects.validator";
@@ -40,7 +40,7 @@ projectsRouter.post("/", async (req, res, next) => {
   }
 });
 
-async function requireProjectAccess(req: any, _res: any, next: any) {
+async function requireProjectAccess(req: Request, _res: Response, next: NextFunction) {
   try {
     const [member] = await db
       .select()
@@ -55,7 +55,7 @@ async function requireProjectAccess(req: any, _res: any, next: any) {
   }
 }
 
-async function requireProjectAdmin(req: any, _res: any, next: any) {
+async function requireProjectAdmin(req: Request, _res: Response, next: NextFunction) {
   try {
     const [member] = await db
       .select()

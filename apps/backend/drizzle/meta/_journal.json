@@ -8,6 +8,13 @@
       "when": 1785347805664,
       "tag": "0000_shiny_johnny_blaze",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1785404329336,
+      "tag": "0001_parched_norman_osborn",
+      "breakpoints": true
     }
   ]
 }

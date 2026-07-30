@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeAll } from "vitest";
 import request from "supertest";
 import { app } from "../../app";
 
@@ -7,14 +7,14 @@ describe("Tasks", () => {
   let projectId: string;
   let taskId: string;
 
-  it("creates a task", async () => {
+  beforeAll(async () => {
     const login = await request(app)
       .post("/api/auth/login")
       .send({ email: "admin@test.com", password: "admin123" });
     token = login.body.token;
+  });
 
-    projectId = login.body.user.id;
-
+  it("creates a task", async () => {
     const project = await request(app)
       .post("/api/projects")
       .set("Authorization", `Bearer ${token}`)

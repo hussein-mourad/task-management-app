@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-core";
 import { createId } from "@paralleldrive/cuid2";
 import { users } from "../auth/auth.schema";
 
@@ -15,13 +15,17 @@ export const projects = pgTable("projects", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const projectMembers = pgTable("project_members", {
-  projectId: text("project_id")
-    .notNull()
-    .references(() => projects.id, { onDelete: "cascade" }),
-  userId: text("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  role: text().notNull().default("member"),
-  joinedAt: timestamp("joined_at").defaultNow().notNull(),
-});
+export const projectMembers = pgTable(
+  "project_members",
+  {
+    projectId: text("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    role: text().notNull().default("member"),
+    joinedAt: timestamp("joined_at").defaultNow().notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.projectId, t.userId] })],
+);

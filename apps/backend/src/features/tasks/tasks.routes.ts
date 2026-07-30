@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type Request, type Response, type NextFunction } from "express";
 import { db } from "../../lib/db";
 import { tasks } from "./tasks.schema";
 import { createTaskSchema, updateTaskSchema } from "./tasks.validator";
@@ -11,7 +11,7 @@ export const tasksRouter = Router({ mergeParams: true });
 
 tasksRouter.use(requireAuth);
 
-async function requireMember(req: any, _res: any, next: any) {
+async function requireMember(req: Request, _res: Response, next: NextFunction) {
   try {
     const [member] = await db
       .select()
@@ -27,21 +27,13 @@ async function requireMember(req: any, _res: any, next: any) {
 
 tasksRouter.get("/", requireMember, async (req, res, next) => {
   try {
-    let query = db.select().from(tasks).where(eq(tasks.projectId, req.params.projectId));
-    const rows = await query;
-    let filtered = rows;
+    const conditions: any[] = [eq(tasks.projectId, req.params.projectId)];
+    if (req.query.status) conditions.push(eq(tasks.status, req.query.status as string));
+    if (req.query.priority) conditions.push(eq(tasks.priority, req.query.priority as string));
+    if (req.query.assignee) conditions.push(eq(tasks.assignedTo, req.query.assignee as string));
 
-    if (req.query.status) {
-      filtered = filtered.filter((t) => t.status === req.query.status);
-    }
-    if (req.query.priority) {
-      filtered = filtered.filter((t) => t.priority === req.query.priority);
-    }
-    if (req.query.assignee) {
-      filtered = filtered.filter((t) => t.assignedTo === req.query.assignee);
-    }
-
-    res.json({ tasks: filtered });
+    const rows = await db.select().from(tasks).where(and(...conditions));
+    res.json({ tasks: rows });
   } catch (e) {
     next(e);
   }
