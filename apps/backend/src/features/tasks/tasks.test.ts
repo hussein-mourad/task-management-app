@@ -10,7 +10,7 @@ describe("Tasks", () => {
   beforeAll(async () => {
     const login = await request(app)
       .post("/api/auth/login")
-      .send({ email: "admin@test.com", password: "admin123" });
+      .send({ email: "admin@test.com", password: "password123" });
     token = login.body.token;
   });
 

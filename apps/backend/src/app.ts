@@ -1,5 +1,8 @@
 import express from "express";
+import helmet from "helmet";
 import cors from "cors";
+import rateLimit from "express-rate-limit";
+import morgan from "morgan";
 import { env } from "@/lib/env";
 import { errorHandler } from "@/middleware/errors";
 import { authRouter } from "@/features/auth/auth.routes";
@@ -9,8 +12,18 @@ import { usersRouter } from "@/features/users/users.routes";
 
 export const app = express();
 
-app.use(cors({ origin: env.FRONTEND_URL, credentials: true }));
+app.use(helmet() as any);
+app.use(cors({ origin: env.FRONTEND_URL, credentials: true }) as any);
+app.use(morgan("dev") as any);
 app.use(express.json());
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use("/api", limiter);
 
 app.use("/api/auth", authRouter);
 app.use("/api/projects", projectsRouter);

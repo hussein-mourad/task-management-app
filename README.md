@@ -17,13 +17,14 @@ task-management-app/
 │   │   │   ├── lib/env.ts          — Env var validation (Zod)
 │   │   │   ├── app.ts              — Express app assembly
 │   │   │   └── index.ts            — Entry point
-│   │   └── compose.yml             — PostgreSQL (Docker)
+│   │   └── Dockerfile             — Container image
 │   └── frontend/         — TanStack Start (React 19, Vite 8, Tailwind 4)
 │       └── src/
 │           ├── features/auth/      — AuthContext, login/register forms
 │           ├── features/projects/  — Project list & form
 │           ├── features/tasks/     — Task board (3 columns) & form
 │           └── routes/             — File-based routes (TanStack Router)
+├── compose.yml           — PostgreSQL + backend (Docker)
 ```
 
 **Auth:** JWT-based with bcryptjs password hashing. Token stored in localStorage.
@@ -40,8 +41,8 @@ task-management-app/
 ### Setup
 
 ```bash
-# 1. Start PostgreSQL
-cd apps/backend && docker compose up -d
+# 1. Start PostgreSQL (and optionally the backend via Docker)
+docker compose up -d db
 
 # 2. Copy env and generate JWT secret
 cp apps/backend/.env.example apps/backend/.env
@@ -66,18 +67,27 @@ Backend runs on `http://localhost:8000`, frontend on `http://localhost:3000`.
 ### Environment Variables
 
 | Variable | Description | Default |
-|---|---|---|
+|---|---|---|---|
 | `PORT` | Backend server port | `8000` |
 | `DATABASE_URL` | PostgreSQL connection string | `postgres://postgres:postgres@localhost:5432/postgres` |
 | `JWT_SECRET` | Secret for token signing (min 32 chars) | — |
 | `FRONTEND_URL` | Frontend origin for CORS | `http://localhost:3000` |
+| `VITE_BACKEND_URL` | Backend URL (frontend) | `http://localhost:8000` |
 
-## Test Credentials
+## Test Credentials (all use `password123`)
 
-| Role | Email | Password |
-|---|---|---|
-| Admin | `admin@test.com` | `admin123` |
-| Member | `member@test.com` | `member123` |
+| Role | Email |
+|---|---|
+| Admin | `admin@test.com` |
+| Admin | `sarah@test.com` |
+| Admin | `marcus@test.com` |
+| Member | `alice@test.com` |
+| Member | `bob@test.com` |
+| Member | `emily@test.com` |
+| Member | `james@test.com` |
+| Member | `priya@test.com` |
+| Member | `tom@test.com` |
+| Member | `lisa@test.com` |
 
 Run `bun run --filter backend db:seed` to create these accounts.
 
@@ -130,6 +140,8 @@ All authenticated routes use `Authorization: Bearer <token>` header.
 | `bun run --filter backend db:seed` | Seed test data |
 | `bun run --filter backend db:migrate` | Run pending migrations |
 | `bun run --filter frontend check` | Frontend lint + format check |
+| `docker compose up -d` | Start PostgreSQL (and backend via Docker) |
+| `docker compose up -d db` | Start PostgreSQL only |
 
 ## Testing
 

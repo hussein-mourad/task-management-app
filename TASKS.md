@@ -12,6 +12,9 @@
 - [x] Use axios client for frontend
 - [x] Use params in links
 - [ ] Cannot edit task, Use dnd for status
-- [ ] Cannot edit task details
-- [ ] No members based access on frontend
-- [ ] No members modification
+- [x] Cannot edit task details
+- [x] No members based access on frontend
+- [x] No members modification
+- [ ] Make new project form a dialog
+- [ ] Auth client and server validation
+- [ ] Use different db for testing
