@@ -67,7 +67,7 @@ Backend runs on `http://localhost:8000`, frontend on `http://localhost:3000`.
 ### Environment Variables
 
 | Variable | Description | Default |
-|---|---|---|---|
+|---|---|---|
 | `PORT` | Backend server port | `8000` |
 | `DATABASE_URL` | PostgreSQL connection string | `postgres://postgres:postgres@localhost:5432/postgres` |
 | `JWT_SECRET` | Secret for token signing (min 32 chars) | — |
