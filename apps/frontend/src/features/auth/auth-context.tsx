@@ -38,12 +38,11 @@ function loadAuth(): { user: User | null; token: string | null } {
 export function AuthProvider({ children }: { children: ReactNode }) {
 	const [user, setUser] = useState<User | null>(loadAuth().user);
 	const [token, setToken] = useState<string | null>(loadAuth().token);
-	const [isLoading, setIsLoading] = useState(false);
+	const [isLoading] = useState(false);
 
 	const setAuth = useCallback((user: User, token: string) => {
 		setUser(user);
 		setToken(token);
-		setIsLoading(false);
 		localStorage.setItem("user", JSON.stringify(user));
 		localStorage.setItem("token", token);
 	}, []);
@@ -51,7 +50,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const logout = useCallback(() => {
 		setUser(null);
 		setToken(null);
-		setIsLoading(false);
 		localStorage.removeItem("user");
 		localStorage.removeItem("token");
 	}, []);

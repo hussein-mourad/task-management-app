@@ -11,4 +11,4 @@ This file replaces the auto-generated Bun boilerplate that was here before. The 
 
 ## Dependencies
 
-- `vitest` and `drizzle-kit` are needed but not yet in `devDependencies` — add them explicitly.
+- `vitest`, `drizzle-kit`, `supertest` and `@types/supertest` are required devDependencies.

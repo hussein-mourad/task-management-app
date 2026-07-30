@@ -13,8 +13,8 @@ task-management-app/
 │   │   │   ├── features/projects/  — Projects CRUD + member management
 │   │   │   ├── features/tasks/     — Tasks CRUD + filtering
 │   │   │   ├── middleware/errors.ts — Centralized error handler
-│   │   │   ├── lib/db.ts           — Drizzle ORM client
-│   │   │   ├── config.ts           — Env var validation (Zod)
+│   │   │   ├── db/index.ts         — Drizzle ORM client
+│   │   │   ├── lib/env.ts          — Env var validation (Zod)
 │   │   │   ├── app.ts              — Express app assembly
 │   │   │   └── index.ts            — Entry point
 │   │   └── compose.yml             — PostgreSQL (Docker)

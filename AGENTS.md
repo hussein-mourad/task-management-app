@@ -8,8 +8,7 @@
 
 ## Backend (`apps/backend`)
 
-- Use Express.js (or NestJS), NOT `Bun.serve()`. The existing `apps/backend/AGENTS.md` is stale boilerplate.
-- `vitest` and `drizzle-kit` are referenced in scripts but **not yet installed**. Add them to `devDependencies` explicitly.
+- Use Express.js (or NestJS), NOT `Bun.serve()`.
 - Drizzle scripts: `db:generate`, `db:migrate`, `db:push`, `db:studio`, `db:seed`.
 - Tests: `bun run --filter backend test` (vitest).
 

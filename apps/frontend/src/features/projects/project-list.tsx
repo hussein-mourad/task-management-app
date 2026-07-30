@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
 	createProject as apiCreateProject,
 	listProjects,
@@ -146,9 +147,8 @@ function ProjectForm({
 					</div>
 					<div className="space-y-1">
 						<Label htmlFor="project-desc">Description (optional)</Label>
-						<textarea
+						<Textarea
 							id="project-desc"
-							className="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
 							placeholder="Description (optional)"
 							value={description}
 							onChange={(e) => setDescription(e.target.value)}

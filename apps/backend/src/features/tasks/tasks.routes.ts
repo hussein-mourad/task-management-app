@@ -4,7 +4,7 @@ import { tasks, projectMembers } from "@/db/schema";
 import { createTaskSchema, updateTaskSchema } from "./tasks.validator";
 import { requireAuth } from "@/features/auth/auth.middleware";
 import { AppError } from "@/middleware/errors";
-import { eq, and } from "drizzle-orm";
+import { eq, and, type SQL } from "drizzle-orm";
 
 export const tasksRouter = Router({ mergeParams: true });
 
@@ -26,7 +26,7 @@ async function requireMember(req: Request, _res: Response, next: NextFunction) {
 
 tasksRouter.get("/", requireMember, async (req, res, next) => {
   try {
-    const conditions: any[] = [eq(tasks.projectId, req.params.projectId)];
+    const conditions: SQL[] = [eq(tasks.projectId, req.params.projectId)];
     if (req.query.status) conditions.push(eq(tasks.status, req.query.status as string));
     if (req.query.priority) conditions.push(eq(tasks.priority, req.query.priority as string));
     if (req.query.assignee) conditions.push(eq(tasks.assignedTo, req.query.assignee as string));
@@ -76,9 +76,10 @@ tasksRouter.get("/:taskId", requireMember, async (req, res, next) => {
 tasksRouter.put("/:taskId", requireMember, async (req, res, next) => {
   try {
     const data = updateTaskSchema.parse(req.body);
-    const updateData: any = { ...data };
-    if (data.dueDate !== undefined) {
-      updateData.dueDate = data.dueDate ? new Date(data.dueDate) : null;
+    const { dueDate, ...rest } = data;
+    const updateData: Partial<typeof tasks.$inferInsert> = { ...rest };
+    if (dueDate !== undefined) {
+      updateData.dueDate = dueDate ? new Date(dueDate) : null;
     }
     const [task] = await db
       .update(tasks)
