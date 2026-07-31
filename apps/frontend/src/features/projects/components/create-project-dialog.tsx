@@ -78,10 +78,8 @@ export function CreateProjectDialog({
 						<Button type="submit" disabled={submitting}>
 							{submitting ? "Creating..." : "Create"}
 						</Button>
-						<DialogClose asChild>
-							<Button type="button" variant="outline">
-								Cancel
-							</Button>
+						<DialogClose render={<Button type="button" variant="outline" />}>
+							Cancel
 						</DialogClose>
 					</div>
 				</form>

@@ -8,10 +8,18 @@ import {
 	updateProject,
 } from "./api";
 
-export function useProjects(page = 1, limit = 20) {
+export function useProjects(
+	page = 1,
+	limit = 20,
+	options?: {
+		search?: string;
+		sortBy?: "name" | "createdAt" | "updatedAt";
+		order?: "asc" | "desc";
+	},
+) {
 	return useQuery({
-		queryKey: ["projects", { page, limit }],
-		queryFn: () => listProjects(page, limit),
+		queryKey: ["projects", { page, limit, ...options }],
+		queryFn: () => listProjects(page, limit, options),
 	});
 }
 

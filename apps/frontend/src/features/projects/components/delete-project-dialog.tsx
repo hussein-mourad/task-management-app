@@ -29,10 +29,8 @@ export function DeleteProjectDialog({
 					tasks and members. This action cannot be undone.
 				</p>
 				<div className="flex gap-2 justify-end">
-					<DialogClose asChild>
-						<Button type="button" variant="outline">
-							Cancel
-						</Button>
+					<DialogClose render={<Button type="button" variant="outline" />}>
+						Cancel
 					</DialogClose>
 					<Button
 						type="button"

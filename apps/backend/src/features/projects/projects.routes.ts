@@ -4,7 +4,7 @@ import { projects, projectMembers, tasks, users } from "@/db/schema";
 import { createProjectSchema, updateProjectSchema, addMemberSchema } from "./projects.validator";
 import { requireAuth } from "@/features/auth/auth.middleware";
 import { AppError } from "@/middleware/errors";
-import { eq, and, inArray, count, desc } from "drizzle-orm";
+import { eq, and, or, inArray, count, asc, desc, ilike, type SQL } from "drizzle-orm";
 
 export const projectsRouter = Router();
 
@@ -24,7 +24,24 @@ projectsRouter.get("/", async (req, res, next) => {
       .from(projectMembers)
       .where(eq(projectMembers.userId, req.userId!));
 
-    const where = inArray(projects.id, memberProjectIds);
+    const conditions: SQL[] = [inArray(projects.id, memberProjectIds)];
+    if (req.query.search) {
+      const pattern = `%${req.query.search as string}%`;
+      conditions.push(
+        or(ilike(projects.name, pattern), ilike(projects.description, pattern))!,
+      );
+    }
+    const where = and(...conditions);
+
+    const sortBy = (req.query.sortBy as string) || "createdAt";
+    const order = (req.query.order as string) || "desc";
+    const dir = order === "asc" ? asc : desc;
+    const column =
+      sortBy === "name"
+        ? projects.name
+        : sortBy === "updatedAt"
+          ? projects.updatedAt
+          : projects.createdAt;
 
     const [countRow] = await db
       .select({ count: count() })
@@ -33,10 +50,19 @@ projectsRouter.get("/", async (req, res, next) => {
     const total = countRow?.count ?? 0;
 
     const rows = await db
-      .select()
+      .select({
+        id: projects.id,
+        name: projects.name,
+        description: projects.description,
+        createdBy: projects.createdBy,
+        ownerName: users.name,
+        createdAt: projects.createdAt,
+        updatedAt: projects.updatedAt,
+      })
       .from(projects)
+      .innerJoin(users, eq(users.id, projects.createdBy))
       .where(where)
-      .orderBy(desc(projects.createdAt), desc(projects.id))
+      .orderBy(dir(column), dir(projects.id))
       .limit(limit)
       .offset(offset);
 
@@ -88,9 +114,22 @@ async function requireProjectAdmin(req: Request, _res: Response, next: NextFunct
 
 projectsRouter.get("/:id", requireProjectAccess, async (req, res, next) => {
   try {
-    const [project] = await db.select().from(projects).where(eq(projects.id, req.params.id as string)).limit(1);
-    if (!project) throw new AppError(404, "Project not found");
-    res.json({ project });
+    const [row] = await db
+      .select({
+        id: projects.id,
+        name: projects.name,
+        description: projects.description,
+        createdBy: projects.createdBy,
+        ownerName: users.name,
+        createdAt: projects.createdAt,
+        updatedAt: projects.updatedAt,
+      })
+      .from(projects)
+      .innerJoin(users, eq(users.id, projects.createdBy))
+      .where(eq(projects.id, req.params.id as string))
+      .limit(1);
+    if (!row) throw new AppError(404, "Project not found");
+    res.json({ project: row });
   } catch (e) {
     next(e);
   }

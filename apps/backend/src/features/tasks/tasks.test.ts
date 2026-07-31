@@ -66,4 +66,43 @@ describe("Tasks", () => {
     expect(res.status).toBe(200);
     expect(res.body.task.status).toBe("in_progress");
   });
+
+  it("searches tasks by title", async () => {
+    const created = await request(app)
+      .post(`/api/projects/${projectId}/tasks`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ title: "Handle the zebra migration" });
+
+    expect(created.status).toBe(201);
+
+    const res = await request(app)
+      .get(`/api/projects/${projectId}/tasks?search=zebra`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.tasks.length).toBeGreaterThan(0);
+    expect(
+      res.body.tasks.every((t: any) =>
+        t.title.toLowerCase().includes("zebra"),
+      ),
+    ).toBe(true);
+  });
+
+  it("sorts tasks by priority", async () => {
+    await request(app)
+      .post(`/api/projects/${projectId}/tasks`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ title: "Critical priority task", priority: "critical" });
+
+    const res = await request(app)
+      .get(`/api/projects/${projectId}/tasks?sortBy=priority&order=asc`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    const priorities = res.body.tasks.map((t: any) => t.priority);
+    const rank = (p: string) =>
+      ["critical", "high", "medium", "low"].indexOf(p);
+    const sorted = [...priorities].sort((a, b) => rank(a) - rank(b));
+    expect(priorities).toEqual(sorted);
+  });
 });

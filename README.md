@@ -138,17 +138,28 @@ All authenticated routes use `Authorization: Bearer <token>` header.
 
 ## Testing
 
-13 backend integration tests covering:
+20 backend integration tests covering:
 
 - Auth registration and login
 - Auth guard (401 without token)
 - Project CRUD
 - Task CRUD with filtering
+- Pagination, search, and sorting
 - Authorization (non-members blocked)
+- Swagger docs endpoint
+
+Tests run against a dedicated `task_app_test` database (created and migrated
+automatically), so your development data is never touched.
 
 ```bash
 bun run --filter backend test
 ```
+
+## API Docs
+
+Interactive API documentation (Swagger UI) is served at
+`http://localhost:8000/api-docs` once the backend is running. The raw OpenAPI
+spec is available at `http://localhost:8000/api-docs/openapi.json`.
 
 ## Tech Stack
 

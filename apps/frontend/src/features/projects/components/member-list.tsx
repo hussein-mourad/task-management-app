@@ -101,10 +101,8 @@ export function MemberList({
 						project?
 					</p>
 					<div className="flex gap-2 justify-end">
-						<DialogClose asChild>
-							<Button type="button" variant="outline">
-								Cancel
-							</Button>
+						<DialogClose render={<Button type="button" variant="outline" />}>
+							Cancel
 						</DialogClose>
 						<Button
 							type="button"

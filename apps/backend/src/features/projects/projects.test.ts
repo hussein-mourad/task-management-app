@@ -59,4 +59,37 @@ describe("Projects", () => {
     expect(res.body.limit).toBe(5);
     expect(res.body.total).toBeTypeOf("number");
   });
+
+  it("searches projects by name", async () => {
+    await request(app)
+      .post("/api/projects")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ name: "Alpha Marketing" });
+    await request(app)
+      .post("/api/projects")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ name: "Beta Logistics" });
+
+    const res = await request(app)
+      .get("/api/projects?search=Alpha")
+      .set("Authorization", `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.projects.length).toBeGreaterThan(0);
+    expect(
+      res.body.projects.every((p: any) =>
+        p.name.toLowerCase().includes("alpha"),
+      ),
+    ).toBe(true);
+  });
+
+  it("sorts projects by name ascending", async () => {
+    const res = await request(app)
+      .get("/api/projects?sortBy=name&order=asc")
+      .set("Authorization", `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(200);
+    const names = res.body.projects.map((p: any) => p.name);
+    expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
+  });
 });

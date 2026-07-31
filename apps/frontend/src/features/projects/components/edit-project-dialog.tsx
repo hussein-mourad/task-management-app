@@ -85,10 +85,8 @@ export function EditProjectDialog({
 						<Button type="submit" disabled={updateMutation.isPending}>
 							{updateMutation.isPending ? "Saving..." : "Save"}
 						</Button>
-						<DialogClose asChild>
-							<Button type="button" variant="outline">
-								Cancel
-							</Button>
+						<DialogClose render={<Button type="button" variant="outline" />}>
+							Cancel
 						</DialogClose>
 					</div>
 				</form>

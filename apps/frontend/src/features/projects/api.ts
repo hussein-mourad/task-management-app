@@ -5,16 +5,33 @@ type Project = {
 	name: string;
 	description: string | null;
 	createdBy: string;
+	ownerName: string;
+	createdAt: string;
+	updatedAt: string;
 };
 
-export async function listProjects(page = 1, limit = 20) {
+export async function listProjects(
+	page = 1,
+	limit = 20,
+	options?: {
+		search?: string;
+		sortBy?: "name" | "createdAt" | "updatedAt";
+		order?: "asc" | "desc";
+	},
+) {
 	const { data } = await api.get<{
 		projects: Project[];
 		page: number;
 		limit: number;
 		total: number;
 	}>("/api/projects", {
-		params: { page, limit },
+		params: {
+			page,
+			limit,
+			search: options?.search || undefined,
+			sortBy: options?.sortBy || undefined,
+			order: options?.order || undefined,
+		},
 	});
 	return data;
 }

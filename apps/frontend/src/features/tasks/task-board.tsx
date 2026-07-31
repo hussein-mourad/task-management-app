@@ -15,6 +15,7 @@ import { useCallback, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
 	Select,
 	SelectContent,
@@ -30,6 +31,7 @@ import {
 } from "@/features/tasks/api";
 import { CreateTaskDialog } from "@/features/tasks/components/create-task-dialog";
 import { EditTaskDialog } from "@/features/tasks/components/edit-task-dialog";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 
 type Task = {
 	id: string;
@@ -56,13 +58,25 @@ const priorityOptions = [
 	{ value: "critical", label: "Critical" },
 ];
 
+const boardSortOptions = [
+	{ value: "createdAt-desc", label: "Newest" },
+	{ value: "createdAt-asc", label: "Oldest" },
+	{ value: "priority-asc", label: "Priority (high → low)" },
+	{ value: "dueDate-asc", label: "Due date (soonest)" },
+	{ value: "title-asc", label: "Title (A–Z)" },
+];
+
 export function TaskBoard({ projectId }: { projectId: string }) {
 	const queryClient = useQueryClient();
 	const [filter, setFilter] = useState({
 		status: "",
 		priority: "",
 		assignee: "",
+		sortBy: "createdAt",
+		order: "desc",
 	});
+	const [searchInput, setSearchInput] = useState("");
+	const debouncedSearch = useDebouncedValue(searchInput);
 	const [showForm, setShowForm] = useState(false);
 	const [activeTask, setActiveTask] = useState<Task | null>(null);
 	const [dragError, setDragError] = useState<string | null>(null);
@@ -77,12 +91,17 @@ export function TaskBoard({ projectId }: { projectId: string }) {
 	});
 
 	const tasksQuery = useQuery({
-		queryKey: ["tasks", projectId, filter],
+		queryKey: ["tasks", projectId, filter, debouncedSearch],
 		queryFn: () =>
 			listTasks(projectId, {
 				status: filter.status || undefined,
 				priority: filter.priority || undefined,
 				assignee: filter.assignee || undefined,
+				search: debouncedSearch || undefined,
+				sortBy: filter.sortBy
+					? (filter.sortBy as "title" | "priority" | "dueDate" | "createdAt")
+					: undefined,
+				order: filter.order ? (filter.order as "asc" | "desc") : undefined,
 				limit: 500,
 			}).then((d) => d.tasks),
 	});
@@ -203,7 +222,7 @@ export function TaskBoard({ projectId }: { projectId: string }) {
 					<Select
 						value={filter.status}
 						onValueChange={(value) =>
-							setFilter((f) => ({ ...f, status: value }))
+							setFilter((f) => ({ ...f, status: value ?? "" }))
 						}
 					>
 						<SelectTrigger className="w-[150px]">
@@ -228,7 +247,7 @@ export function TaskBoard({ projectId }: { projectId: string }) {
 					<Select
 						value={filter.priority}
 						onValueChange={(value) =>
-							setFilter((f) => ({ ...f, priority: value }))
+							setFilter((f) => ({ ...f, priority: value ?? "" }))
 						}
 					>
 						<SelectTrigger className="w-[150px]">
@@ -244,6 +263,36 @@ export function TaskBoard({ projectId }: { projectId: string }) {
 						<SelectContent>
 							<SelectItem value="">All priorities</SelectItem>
 							{priorityOptions.map((o) => (
+								<SelectItem key={o.value} value={o.value}>
+									{o.label}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+					<Input
+						type="search"
+						placeholder="Search tasks..."
+						value={searchInput}
+						onChange={(e) => setSearchInput(e.target.value)}
+						className="w-56"
+					/>
+					<Select
+						value={`${filter.sortBy}-${filter.order}`}
+						onValueChange={(value) => {
+							const [sortBy, order] = (value ?? "createdAt-desc").split("-");
+							setFilter((f) => ({ ...f, sortBy, order }));
+						}}
+					>
+						<SelectTrigger className="w-[170px]">
+							<SelectValue>
+								{(value: string) =>
+									boardSortOptions.find((o) => o.value === value)?.label ??
+									"Sort"
+								}
+							</SelectValue>
+						</SelectTrigger>
+						<SelectContent>
+							{boardSortOptions.map((o) => (
 								<SelectItem key={o.value} value={o.value}>
 									{o.label}
 								</SelectItem>
@@ -432,7 +481,9 @@ function TaskCard({
 					</div>
 					<Select
 						value={task.status}
-						onValueChange={(value) => updateMutation.mutate({ status: value })}
+						onValueChange={(value) =>
+							updateMutation.mutate({ status: value ?? task.status })
+						}
 					>
 						<SelectTrigger className="h-7 w-full text-xs">
 							<SelectValue>

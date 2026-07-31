@@ -18,6 +18,9 @@ type TaskFilters = {
 	assignee?: string;
 	page?: number;
 	limit?: number;
+	search?: string;
+	sortBy?: "title" | "priority" | "dueDate" | "createdAt";
+	order?: "asc" | "desc";
 };
 
 export async function listTasks(projectId: string, filters?: TaskFilters) {
@@ -27,6 +30,9 @@ export async function listTasks(projectId: string, filters?: TaskFilters) {
 	if (filters?.assignee) params.set("assignee", filters.assignee);
 	if (filters?.page) params.set("page", String(filters.page));
 	if (filters?.limit) params.set("limit", String(filters.limit));
+	if (filters?.search) params.set("search", filters.search);
+	if (filters?.sortBy) params.set("sortBy", filters.sortBy);
+	if (filters?.order) params.set("order", filters.order);
 	const qs = params.toString();
 	const path = `/api/projects/${projectId}/tasks${qs ? `?${qs}` : ""}`;
 	const { data } = await api.get<{

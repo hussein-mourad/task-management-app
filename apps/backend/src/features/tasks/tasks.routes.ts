@@ -4,7 +4,7 @@ import { tasks, projectMembers } from "@/db/schema";
 import { createTaskSchema, updateTaskSchema } from "./tasks.validator";
 import { requireAuth } from "@/features/auth/auth.middleware";
 import { AppError } from "@/middleware/errors";
-import { eq, and, count, desc, type SQL } from "drizzle-orm";
+import { eq, and, or, count, asc, desc, ilike, sql, type SQL } from "drizzle-orm";
 
 export const tasksRouter = Router({ mergeParams: true });
 
@@ -47,8 +47,26 @@ tasksRouter.get("/", requireMember, async (req, res, next) => {
     if (req.query.status) conditions.push(eq(tasks.status, req.query.status as string));
     if (req.query.priority) conditions.push(eq(tasks.priority, req.query.priority as string));
     if (req.query.assignee) conditions.push(eq(tasks.assignedTo, req.query.assignee as string));
+    if (req.query.search) {
+      const pattern = `%${req.query.search as string}%`;
+      conditions.push(
+        or(ilike(tasks.title, pattern), ilike(tasks.description, pattern))!,
+      );
+    }
 
     const where = and(...conditions);
+
+    const sortBy = (req.query.sortBy as string) || "createdAt";
+    const order = (req.query.order as string) || "desc";
+    const dir = order === "asc" ? asc : desc;
+    const sortColumn =
+      sortBy === "title"
+        ? tasks.title
+        : sortBy === "priority"
+          ? sql`CASE ${tasks.priority} WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 ELSE 4 END`
+          : sortBy === "dueDate"
+            ? tasks.dueDate
+            : tasks.createdAt;
 
     const [countRow] = await db
       .select({ count: count() })
@@ -60,7 +78,7 @@ tasksRouter.get("/", requireMember, async (req, res, next) => {
       .select()
       .from(tasks)
       .where(where)
-      .orderBy(desc(tasks.createdAt), desc(tasks.id))
+      .orderBy(dir(sortColumn), dir(tasks.id))
       .limit(limit)
       .offset(offset);
 

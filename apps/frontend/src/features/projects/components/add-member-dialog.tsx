@@ -54,7 +54,10 @@ export function AddMemberDialog({
 				<div className="space-y-3">
 					<div className="space-y-1">
 						<Label htmlFor="add-member-user">User</Label>
-						<Select value={selectedUserId} onValueChange={setSelectedUserId}>
+						<Select
+							value={selectedUserId}
+							onValueChange={(value) => setSelectedUserId(value ?? "")}
+						>
 							<SelectTrigger id="add-member-user" className="w-full">
 								<SelectValue placeholder="Select a user">
 									{(value: string) => {
@@ -74,10 +77,8 @@ export function AddMemberDialog({
 						</Select>
 					</div>
 					<div className="flex gap-2 justify-end">
-						<DialogClose asChild>
-							<Button type="button" variant="outline">
-								Cancel
-							</Button>
+						<DialogClose render={<Button type="button" variant="outline" />}>
+							Cancel
 						</DialogClose>
 						<Button
 							type="button"

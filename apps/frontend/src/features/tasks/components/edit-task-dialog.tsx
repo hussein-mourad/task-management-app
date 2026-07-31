@@ -131,7 +131,7 @@ export function EditTaskDialog({
 							<Label htmlFor="edit-status">Status</Label>
 							<Select
 								value={form.watch("status")}
-								onValueChange={(value) => form.setValue("status", value)}
+								onValueChange={(value) => form.setValue("status", value ?? "")}
 							>
 								<SelectTrigger id="edit-status" className="w-full">
 									<SelectValue>
@@ -154,7 +154,9 @@ export function EditTaskDialog({
 							<Label htmlFor="edit-priority">Priority</Label>
 							<Select
 								value={form.watch("priority")}
-								onValueChange={(value) => form.setValue("priority", value)}
+								onValueChange={(value) =>
+									form.setValue("priority", value ?? "")
+								}
 							>
 								<SelectTrigger id="edit-priority" className="w-full">
 									<SelectValue>
@@ -180,7 +182,7 @@ export function EditTaskDialog({
 								onValueChange={(value) =>
 									form.setValue(
 										"assignedTo",
-										value === "unassigned" ? null : value,
+										value === "unassigned" || value == null ? null : value,
 									)
 								}
 							>
@@ -208,10 +210,8 @@ export function EditTaskDialog({
 							<Button type="submit" disabled={updateMutation.isPending}>
 								{updateMutation.isPending ? "Saving..." : "Save"}
 							</Button>
-							<DialogClose asChild>
-								<Button type="button" variant="outline">
-									Cancel
-								</Button>
+							<DialogClose render={<Button type="button" variant="outline" />}>
+								Cancel
 							</DialogClose>
 							<Button
 								type="button"

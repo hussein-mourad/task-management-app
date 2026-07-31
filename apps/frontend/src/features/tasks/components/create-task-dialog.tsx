@@ -26,7 +26,7 @@ import { useProjectMembers } from "@/features/users/hooks";
 const createTaskFormSchema = z.object({
 	title: z.string().min(1, "Title is required"),
 	description: z.string().optional(),
-	priority: z.string().default("medium"),
+	priority: z.string(),
 	dueDate: z.string().optional(),
 	assignedTo: z.string().optional(),
 });
@@ -118,7 +118,9 @@ export function CreateTaskDialog({
 							<Label htmlFor="create-priority">Priority</Label>
 							<Select
 								value={form.watch("priority")}
-								onValueChange={(value) => form.setValue("priority", value)}
+								onValueChange={(value) =>
+									form.setValue("priority", value ?? "medium")
+								}
 							>
 								<SelectTrigger id="create-priority" className="w-full">
 									<SelectValue>
@@ -144,7 +146,7 @@ export function CreateTaskDialog({
 								onValueChange={(value) =>
 									form.setValue(
 										"assignedTo",
-										value === "unassigned" ? "" : value,
+										value === "unassigned" || value == null ? "" : value,
 									)
 								}
 							>
@@ -172,10 +174,8 @@ export function CreateTaskDialog({
 							<Button type="submit" disabled={createMutation.isPending}>
 								{createMutation.isPending ? "Creating..." : "Create"}
 							</Button>
-							<DialogClose asChild>
-								<Button type="button" variant="outline">
-									Cancel
-								</Button>
+							<DialogClose render={<Button type="button" variant="outline" />}>
+								Cancel
 							</DialogClose>
 						</div>
 					</form>
