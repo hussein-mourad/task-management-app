@@ -66,28 +66,21 @@ Backend runs on `http://localhost:8000`, frontend on `http://localhost:3000`.
 
 ### Environment Variables
 
-| Variable | Description | Default |
-|---|---|---|
-| `PORT` | Backend server port | `8000` |
-| `DATABASE_URL` | PostgreSQL connection string | `postgres://postgres:postgres@localhost:5432/postgres` |
-| `JWT_SECRET` | Secret for token signing (min 32 chars) | — |
-| `FRONTEND_URL` | Frontend origin for CORS | `http://localhost:3000` |
-| `VITE_BACKEND_URL` | Backend URL (frontend) | `http://localhost:8000` |
+| Variable           | Description                             | Default                                                |
+| ------------------ | --------------------------------------- | ------------------------------------------------------ |
+| `PORT`             | Backend server port                     | `8000`                                                 |
+| `DATABASE_URL`     | PostgreSQL connection string            | `postgres://postgres:postgres@localhost:5432/postgres` |
+| `JWT_SECRET`       | Secret for token signing (min 32 chars) | —                                                      |
+| `FRONTEND_URL`     | Frontend origin for CORS                | `http://localhost:3000`                                |
+| `VITE_BACKEND_URL` | Backend URL (frontend)                  | `http://localhost:8000`                                |
 
 ## Test Credentials (all use `password123`)
 
-| Role | Email |
-|---|---|
-| Admin | `admin@test.com` |
-| Admin | `sarah@test.com` |
-| Admin | `marcus@test.com` |
+| Role   | Email            |
+| ------ | ---------------- |
+| Admin  | `admin@test.com` |
 | Member | `alice@test.com` |
-| Member | `bob@test.com` |
-| Member | `emily@test.com` |
-| Member | `james@test.com` |
-| Member | `priya@test.com` |
-| Member | `tom@test.com` |
-| Member | `lisa@test.com` |
+| Member | `bob@test.com`   |
 
 Run `bun run --filter backend db:seed` to create these accounts.
 
@@ -130,22 +123,23 @@ All authenticated routes use `Authorization: Bearer <token>` header.
 
 ## Scripts
 
-| Command | Action |
-|---|---|
-| `bun run dev` | Start both apps |
-| `bun run dev:backend` | Backend only (watch mode) |
-| `bun run dev:frontend` | Frontend only |
-| `bun run test` | Run all tests |
-| `bun run --filter backend test` | Backend tests only |
-| `bun run --filter backend db:seed` | Seed test data |
-| `bun run --filter backend db:migrate` | Run pending migrations |
-| `bun run --filter frontend check` | Frontend lint + format check |
-| `docker compose up -d` | Start PostgreSQL (and backend via Docker) |
-| `docker compose up -d db` | Start PostgreSQL only |
+| Command                               | Action                                    |
+| ------------------------------------- | ----------------------------------------- |
+| `bun run dev`                         | Start both apps                           |
+| `bun run dev:backend`                 | Backend only (watch mode)                 |
+| `bun run dev:frontend`                | Frontend only                             |
+| `bun run test`                        | Run all tests                             |
+| `bun run --filter backend test`       | Backend tests only                        |
+| `bun run --filter backend db:seed`    | Seed test data                            |
+| `bun run --filter backend db:migrate` | Run pending migrations                    |
+| `bun run --filter frontend check`     | Frontend lint + format check              |
+| `docker compose up -d`                | Start PostgreSQL (and backend via Docker) |
+| `docker compose up -d db`             | Start PostgreSQL only                     |
 
 ## Testing
 
 13 backend integration tests covering:
+
 - Auth registration and login
 - Auth guard (401 without token)
 - Project CRUD
@@ -158,12 +152,12 @@ bun run --filter backend test
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Runtime | Bun |
-| Backend | Express.js + TypeScript |
-| Database | PostgreSQL + Drizzle ORM |
-| Auth | JWT + bcryptjs + Zod |
-| Testing | Vitest + Supertest |
-| Frontend | TanStack Start (React 19, Vite 8, Tailwind 4, TanStack Router) |
-| Lint/Format | Biome |
+| Layer       | Technology                                                     |
+| ----------- | -------------------------------------------------------------- |
+| Runtime     | Bun                                                            |
+| Backend     | Express.js + TypeScript                                        |
+| Database    | PostgreSQL + Drizzle ORM                                       |
+| Auth        | JWT + bcryptjs + Zod                                           |
+| Testing     | Vitest + Supertest                                             |
+| Frontend    | TanStack Start (React 19, Vite 8, Tailwind 4, TanStack Router) |
+| Lint/Format | Biome                                                          |

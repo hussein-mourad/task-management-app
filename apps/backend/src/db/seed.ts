@@ -4,9 +4,8 @@ import { users, projects, projectMembers, tasks } from "./schema";
 import { hashPassword } from "@/features/auth/auth.service";
 
 // Seed configuration
-const NUM_USERS = 3; // Max of 10 users
-const PROJECTS_PER_USER = 10;
-const TASKS_PER_PROJECT = 10;
+const PROJECTS_PER_USER = 15;
+const TASKS_PER_PROJECT = 15;
 const BATCH_SIZE = 500;
 
 function pick<T>(arr: readonly T[]): T {
@@ -31,23 +30,12 @@ async function seed() {
   await db.delete(projects);
   await db.delete(users);
 
-  console.log(`Creating ${NUM_USERS} users...`);
   const userData = [
     { email: "admin@test.com", name: "Admin User", role: "admin" as const },
-    { email: "sarah@test.com", name: "Sarah Chen", role: "admin" as const },
     { email: "alice@test.com", name: "Alice Johnson", role: "member" as const },
     { email: "bob@test.com", name: "Bob Martinez", role: "member" as const },
-    { email: "emily@test.com", name: "Emily Davis", role: "member" as const },
-    {
-      email: "marcus@test.com",
-      name: "Marcus Johnson",
-      role: "admin" as const,
-    },
-    { email: "james@test.com", name: "James Wilson", role: "member" as const },
-    { email: "priya@test.com", name: "Priya Patel", role: "member" as const },
-    { email: "tom@test.com", name: "Tom Brown", role: "member" as const },
-    { email: "lisa@test.com", name: "Lisa Anderson", role: "member" as const },
-  ].slice(0, NUM_USERS);
+  ];
+  console.log(`Creating ${userData.length} users...`);
 
   const createdUsers = await db
     .insert(users)
