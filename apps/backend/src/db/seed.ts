@@ -74,9 +74,12 @@ async function seed() {
     .returning();
   console.log(`  ✓ ${createdProjects.length} projects created`);
 
+  const adminUser = createdUsers.find((u) => u.role === "admin")!;
+  const regularUsers = createdUsers.filter((u) => u.role !== "admin");
+
   let projectIdx = 0;
   for (const user of createdUsers) {
-    const otherUsers = createdUsers.filter((u) => u.id !== user.id);
+    const otherUsers = regularUsers.filter((u) => u.id !== user.id);
 
     for (let i = 0; i < PROJECTS_PER_USER; i++) {
       const project = createdProjects[projectIdx]!;
@@ -85,12 +88,21 @@ async function seed() {
         userId: user.id,
         role: "admin",
       });
-      for (const other of otherUsers) {
+      if (user.id !== adminUser.id) {
         memberValues.push({
           projectId: project.id,
-          userId: other.id,
-          role: "member",
+          userId: adminUser.id,
+          role: "admin",
         });
+      }
+      for (const other of otherUsers) {
+        if (Math.random() > 0.5) {
+          memberValues.push({
+            projectId: project.id,
+            userId: other.id,
+            role: "member",
+          });
+        }
       }
       projectIdx++;
     }
