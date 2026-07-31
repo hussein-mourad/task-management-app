@@ -4,7 +4,7 @@ export const swaggerSpec = {
     title: "Task Management API",
     version: "1.0.0",
     description:
-      "REST API for a team task board. Authenticate via JWT and send it as a `Bearer` token.",
+      "REST API for a team task board. Authenticate via JWT and send it as a `Bearer` token. Global admins can access every project (list, view, and modify) even without a project membership; members are restricted to projects they belong to.",
   },
   servers: [{ url: "/" }],
   components: {

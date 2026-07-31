@@ -105,4 +105,29 @@ describe("Tasks", () => {
     const sorted = [...priorities].sort((a, b) => rank(a) - rank(b));
     expect(priorities).toEqual(sorted);
   });
+
+  it("lets a global admin create tasks in a non-member project", async () => {
+    const ownerEmail = `task-owner-${Date.now()}@test.com`;
+    await request(app)
+      .post("/api/auth/register")
+      .send({ email: ownerEmail, password: "password123", name: "Owner" });
+    const ownerLogin = await request(app)
+      .post("/api/auth/login")
+      .send({ email: ownerEmail, password: "password123" });
+    const ownerToken = ownerLogin.body.token;
+
+    const project = await request(app)
+      .post("/api/projects")
+      .set("Authorization", `Bearer ${ownerToken}`)
+      .send({ name: "Foreign Admin Project" });
+    const foreignProjectId = project.body.project.id;
+
+    const res = await request(app)
+      .post(`/api/projects/${foreignProjectId}/tasks`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ title: "Admin created task", priority: "high" });
+
+    expect(res.status).toBe(201);
+    expect(res.body.task.title).toBe("Admin created task");
+  });
 });

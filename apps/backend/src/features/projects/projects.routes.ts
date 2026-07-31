@@ -24,14 +24,17 @@ projectsRouter.get("/", async (req, res, next) => {
       .from(projectMembers)
       .where(eq(projectMembers.userId, req.userId!));
 
-    const conditions: SQL[] = [inArray(projects.id, memberProjectIds)];
+    const conditions: SQL[] = [];
+    if (req.userRole !== "admin") {
+      conditions.push(inArray(projects.id, memberProjectIds));
+    }
     if (req.query.search) {
       const pattern = `%${req.query.search as string}%`;
       conditions.push(
         or(ilike(projects.name, pattern), ilike(projects.description, pattern))!,
       );
     }
-    const where = and(...conditions);
+    const where = conditions.length ? and(...conditions) : undefined;
 
     const sortBy = (req.query.sortBy as string) || "createdAt";
     const order = (req.query.order as string) || "desc";
@@ -85,6 +88,10 @@ projectsRouter.post("/", async (req, res, next) => {
 
 async function requireProjectAccess(req: Request, _res: Response, next: NextFunction) {
   try {
+    if (req.userRole === "admin") {
+      next();
+      return;
+    }
     const [member] = await db
       .select()
       .from(projectMembers)
@@ -100,6 +107,10 @@ async function requireProjectAccess(req: Request, _res: Response, next: NextFunc
 
 async function requireProjectAdmin(req: Request, _res: Response, next: NextFunction) {
   try {
+    if (req.userRole === "admin") {
+      next();
+      return;
+    }
     const [member] = await db
       .select()
       .from(projectMembers)

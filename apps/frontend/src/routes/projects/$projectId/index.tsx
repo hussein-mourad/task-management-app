@@ -31,7 +31,7 @@ function ProjectDetail() {
 		return <div className="p-8 text-destructive">Project not found</div>;
 
 	const currentMember = members?.find((m) => m.id === user.id);
-	const isAdmin = currentMember?.role === "admin";
+	const isAdmin = user.role === "admin" || currentMember?.role === "admin";
 
 	return (
 		<div>

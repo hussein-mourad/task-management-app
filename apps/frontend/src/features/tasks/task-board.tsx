@@ -76,7 +76,7 @@ export function TaskBoard({ projectId }: { projectId: string }) {
 		order: "desc",
 	});
 	const [searchInput, setSearchInput] = useState("");
-	const debouncedSearch = useDebouncedValue(searchInput);
+	const debouncedSearch = useDebouncedValue(searchInput, 800);
 	const [showForm, setShowForm] = useState(false);
 	const [activeTask, setActiveTask] = useState<Task | null>(null);
 	const [dragError, setDragError] = useState<string | null>(null);

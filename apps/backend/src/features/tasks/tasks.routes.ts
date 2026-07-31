@@ -12,12 +12,14 @@ tasksRouter.use(requireAuth);
 
 async function requireMember(req: Request, _res: Response, next: NextFunction) {
   try {
-    const [member] = await db
-      .select()
-      .from(projectMembers)
-      .where(and(eq(projectMembers.projectId, req.params.projectId as string), eq(projectMembers.userId, req.userId!)))
-      .limit(1);
-    if (!member) throw new AppError(403, "Not a project member");
+    if (req.userRole !== "admin") {
+      const [member] = await db
+        .select()
+        .from(projectMembers)
+        .where(and(eq(projectMembers.projectId, req.params.projectId as string), eq(projectMembers.userId, req.userId!)))
+        .limit(1);
+      if (!member) throw new AppError(403, "Not a project member");
+    }
     next();
   } catch (e) {
     next(e);
