@@ -4,7 +4,7 @@ import { projects, projectMembers, tasks, users } from "@/db/schema";
 import { createProjectSchema, updateProjectSchema, addMemberSchema } from "./projects.validator";
 import { requireAuth } from "@/features/auth/auth.middleware";
 import { AppError } from "@/middleware/errors";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and, inArray, count, desc } from "drizzle-orm";
 
 export const projectsRouter = Router();
 
@@ -12,18 +12,35 @@ projectsRouter.use(requireAuth);
 
 projectsRouter.get("/", async (req, res, next) => {
   try {
+    const page = Math.max(parseInt(req.query.page as string, 10) || 1, 1);
+    const limit = Math.min(
+      Math.max(parseInt(req.query.limit as string, 10) || 20, 1),
+      100,
+    );
+    const offset = (page - 1) * limit;
+
     const memberProjectIds = db
       .select({ projectId: projectMembers.projectId })
       .from(projectMembers)
       .where(eq(projectMembers.userId, req.userId!));
 
+    const where = inArray(projects.id, memberProjectIds);
+
+    const [countRow] = await db
+      .select({ count: count() })
+      .from(projects)
+      .where(where);
+    const total = countRow?.count ?? 0;
+
     const rows = await db
       .select()
       .from(projects)
-      .where(inArray(projects.id, memberProjectIds))
-      .orderBy(projects.createdAt);
+      .where(where)
+      .orderBy(desc(projects.createdAt), desc(projects.id))
+      .limit(limit)
+      .offset(offset);
 
-    res.json({ projects: rows });
+    res.json({ projects: rows, page, limit, total });
   } catch (e) {
     next(e);
   }

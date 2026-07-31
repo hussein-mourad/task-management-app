@@ -7,8 +7,15 @@ type Project = {
 	createdBy: string;
 };
 
-export async function listProjects() {
-	const { data } = await api.get<{ projects: Project[] }>("/api/projects");
+export async function listProjects(page = 1, limit = 20) {
+	const { data } = await api.get<{
+		projects: Project[];
+		page: number;
+		limit: number;
+		total: number;
+	}>("/api/projects", {
+		params: { page, limit },
+	});
 	return data;
 }
 

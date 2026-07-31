@@ -38,6 +38,9 @@ describe("Tasks", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.tasks.every((t: any) => t.status === "todo")).toBe(true);
+    expect(res.body.page).toBe(1);
+    expect(res.body.limit).toBeGreaterThan(0);
+    expect(res.body.total).toBeTypeOf("number");
   });
 
   it("rejects non-members", async () => {

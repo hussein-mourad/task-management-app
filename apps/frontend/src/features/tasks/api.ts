@@ -16,6 +16,8 @@ type TaskFilters = {
 	status?: string;
 	priority?: string;
 	assignee?: string;
+	page?: number;
+	limit?: number;
 };
 
 export async function listTasks(projectId: string, filters?: TaskFilters) {
@@ -23,9 +25,16 @@ export async function listTasks(projectId: string, filters?: TaskFilters) {
 	if (filters?.status) params.set("status", filters.status);
 	if (filters?.priority) params.set("priority", filters.priority);
 	if (filters?.assignee) params.set("assignee", filters.assignee);
+	if (filters?.page) params.set("page", String(filters.page));
+	if (filters?.limit) params.set("limit", String(filters.limit));
 	const qs = params.toString();
 	const path = `/api/projects/${projectId}/tasks${qs ? `?${qs}` : ""}`;
-	const { data } = await api.get<{ tasks: Task[] }>(path);
+	const { data } = await api.get<{
+		tasks: Task[];
+		page: number;
+		limit: number;
+		total: number;
+	}>(path);
 	return data;
 }
 

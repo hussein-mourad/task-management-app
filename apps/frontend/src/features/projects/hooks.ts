@@ -8,10 +8,10 @@ import {
 	updateProject,
 } from "./api";
 
-export function useProjects() {
+export function useProjects(page = 1, limit = 20) {
 	return useQuery({
-		queryKey: ["projects"],
-		queryFn: () => listProjects().then((d) => d.projects),
+		queryKey: ["projects", { page, limit }],
+		queryFn: () => listProjects(page, limit),
 	});
 }
 

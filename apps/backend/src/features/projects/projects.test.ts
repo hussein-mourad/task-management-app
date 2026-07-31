@@ -43,5 +43,20 @@ describe("Projects", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.projects).toBeInstanceOf(Array);
+    expect(res.body.page).toBe(1);
+    expect(res.body.limit).toBeGreaterThan(0);
+    expect(res.body.total).toBeTypeOf("number");
+  });
+
+  it("paginates the project list", async () => {
+    const res = await request(app)
+      .get("/api/projects?page=1&limit=5")
+      .set("Authorization", `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.projects.length).toBeLessThanOrEqual(5);
+    expect(res.body.page).toBe(1);
+    expect(res.body.limit).toBe(5);
+    expect(res.body.total).toBeTypeOf("number");
   });
 });

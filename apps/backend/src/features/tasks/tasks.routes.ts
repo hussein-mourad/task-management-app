@@ -4,7 +4,7 @@ import { tasks, projectMembers } from "@/db/schema";
 import { createTaskSchema, updateTaskSchema } from "./tasks.validator";
 import { requireAuth } from "@/features/auth/auth.middleware";
 import { AppError } from "@/middleware/errors";
-import { eq, and, type SQL } from "drizzle-orm";
+import { eq, and, count, desc, type SQL } from "drizzle-orm";
 
 export const tasksRouter = Router({ mergeParams: true });
 
@@ -36,13 +36,35 @@ async function validateAssignee(projectId: string, assignedTo?: string | null) {
 
 tasksRouter.get("/", requireMember, async (req, res, next) => {
   try {
+    const page = Math.max(parseInt(req.query.page as string, 10) || 1, 1);
+    const limit = Math.min(
+      Math.max(parseInt(req.query.limit as string, 10) || 50, 1),
+      500,
+    );
+    const offset = (page - 1) * limit;
+
     const conditions: SQL[] = [eq(tasks.projectId, req.params.projectId as string)];
     if (req.query.status) conditions.push(eq(tasks.status, req.query.status as string));
     if (req.query.priority) conditions.push(eq(tasks.priority, req.query.priority as string));
     if (req.query.assignee) conditions.push(eq(tasks.assignedTo, req.query.assignee as string));
 
-    const rows = await db.select().from(tasks).where(and(...conditions));
-    res.json({ tasks: rows });
+    const where = and(...conditions);
+
+    const [countRow] = await db
+      .select({ count: count() })
+      .from(tasks)
+      .where(where);
+    const total = countRow?.count ?? 0;
+
+    const rows = await db
+      .select()
+      .from(tasks)
+      .where(where)
+      .orderBy(desc(tasks.createdAt), desc(tasks.id))
+      .limit(limit)
+      .offset(offset);
+
+    res.json({ tasks: rows, page, limit, total });
   } catch (e) {
     next(e);
   }

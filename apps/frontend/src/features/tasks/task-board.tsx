@@ -9,24 +9,12 @@ import {
 	useSensor,
 	useSensors,
 } from "@dnd-kit/core";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil } from "lucide-react";
 import { useCallback, useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
-import { z } from "zod";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-	Dialog,
-	DialogClose,
-	DialogContent,
-	DialogHeader,
-	DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
 	Select,
 	SelectContent,
@@ -34,15 +22,14 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { getProject } from "@/features/projects/api";
 import {
-	createTask as apiCreateTask,
 	deleteTask as apiDeleteTask,
 	updateTask as apiUpdateTask,
 	listTasks,
 } from "@/features/tasks/api";
-import { useProjectMembers } from "@/features/users/hooks";
+import { CreateTaskDialog } from "@/features/tasks/components/create-task-dialog";
+import { EditTaskDialog } from "@/features/tasks/components/edit-task-dialog";
 
 type Task = {
 	id: string;
@@ -68,23 +55,6 @@ const priorityOptions = [
 	{ value: "high", label: "High" },
 	{ value: "critical", label: "Critical" },
 ];
-
-const createTaskFormSchema = z.object({
-	title: z.string().min(1, "Title is required"),
-	description: z.string().optional(),
-	priority: z.string().default("medium"),
-	dueDate: z.string().optional(),
-	assignedTo: z.string().optional(),
-});
-
-const editTaskFormSchema = z.object({
-	title: z.string().min(1, "Title is required"),
-	description: z.string().optional(),
-	status: z.string(),
-	priority: z.string(),
-	dueDate: z.string().optional(),
-	assignedTo: z.string().optional().nullable(),
-});
 
 export function TaskBoard({ projectId }: { projectId: string }) {
 	const queryClient = useQueryClient();
@@ -113,27 +83,13 @@ export function TaskBoard({ projectId }: { projectId: string }) {
 				status: filter.status || undefined,
 				priority: filter.priority || undefined,
 				assignee: filter.assignee || undefined,
+				limit: 500,
 			}).then((d) => d.tasks),
 	});
 
 	const invalidate = useCallback(() => {
 		queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
 	}, [queryClient, projectId]);
-
-	const createMutation = useMutation({
-		mutationFn: (data: z.infer<typeof createTaskFormSchema>) =>
-			apiCreateTask(projectId, {
-				title: data.title,
-				description: data.description || undefined,
-				priority: data.priority,
-				dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : null,
-				assignedTo: data.assignedTo || undefined,
-			}),
-		onSuccess: () => {
-			invalidate();
-			setShowForm(false);
-		},
-	});
 
 	const deleteMutation = useMutation({
 		mutationFn: (taskId: string) => apiDeleteTask(projectId, taskId),
@@ -298,14 +254,11 @@ export function TaskBoard({ projectId }: { projectId: string }) {
 				<Button onClick={() => setShowForm(true)}>New Task</Button>
 			</div>
 
-			{showForm && (
-				<CreateTaskForm
-					projectId={projectId}
-					onClose={() => setShowForm(false)}
-					onSubmit={(data) => createMutation.mutate(data)}
-					isPending={createMutation.isPending}
-				/>
-			)}
+			<CreateTaskDialog
+				projectId={projectId}
+				open={showForm}
+				onOpenChange={setShowForm}
+			/>
 
 			{dragError && (
 				<div className="mb-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
@@ -506,303 +459,5 @@ function TaskCard({
 				onDelete={onDelete}
 			/>
 		</>
-	);
-}
-
-function CreateTaskForm({
-	projectId,
-	onClose,
-	onSubmit,
-	isPending,
-}: {
-	projectId: string;
-	onClose: () => void;
-	onSubmit: (data: z.infer<typeof createTaskFormSchema>) => void;
-	isPending: boolean;
-}) {
-	const form = useForm<z.infer<typeof createTaskFormSchema>>({
-		resolver: zodResolver(createTaskFormSchema),
-		defaultValues: {
-			title: "",
-			description: "",
-			priority: "medium",
-			dueDate: "",
-			assignedTo: "",
-		},
-	});
-	const { data: members } = useProjectMembers(projectId);
-
-	return (
-		<Card className="mb-6">
-			<CardHeader>
-				<CardTitle>New Task</CardTitle>
-			</CardHeader>
-			<CardContent>
-				<FormProvider {...form}>
-					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
-						{form.formState.errors.root && (
-							<p className="text-sm text-destructive">
-								{form.formState.errors.root.message}
-							</p>
-						)}
-						<div className="space-y-1">
-							<Label htmlFor="title">Task title</Label>
-							<Input
-								id="title"
-								placeholder="Task title"
-								{...form.register("title")}
-							/>
-							{form.formState.errors.title && (
-								<p className="text-sm text-destructive">
-									{form.formState.errors.title.message}
-								</p>
-							)}
-						</div>
-						<div className="space-y-1">
-							<Label htmlFor="description">Description (optional)</Label>
-							<Textarea
-								id="description"
-								placeholder="Description (optional)"
-								{...form.register("description")}
-							/>
-						</div>
-						<div className="space-y-1">
-							<Label htmlFor="create-priority">Priority</Label>
-							<Select
-								value={form.watch("priority")}
-								onValueChange={(value) => form.setValue("priority", value)}
-							>
-								<SelectTrigger id="create-priority" className="w-full">
-									<SelectValue>
-										{(value: string) =>
-											priorityOptions.find((o) => o.value === value)?.label ??
-											value
-										}
-									</SelectValue>
-								</SelectTrigger>
-								<SelectContent>
-									{priorityOptions.map((o) => (
-										<SelectItem key={o.value} value={o.value}>
-											{o.label}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-						</div>
-						<div className="space-y-1">
-							<Label htmlFor="create-assignee">Assignee (optional)</Label>
-							<Select
-								value={form.watch("assignedTo")}
-								onValueChange={(value) =>
-									form.setValue(
-										"assignedTo",
-										value === "unassigned" ? "" : value,
-									)
-								}
-							>
-								<SelectTrigger id="create-assignee" className="w-full">
-									<SelectValue placeholder="Unassigned">
-										{(value: string | null) => {
-											if (!value) return "Unassigned";
-											const member = members?.find((m) => m.id === value);
-											return member?.name ?? value;
-										}}
-									</SelectValue>
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="unassigned">Unassigned</SelectItem>
-									{members?.map((m) => (
-										<SelectItem key={m.id} value={m.id}>
-											{m.name}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-						</div>
-						<Input type="date" {...form.register("dueDate")} />
-						<div className="flex gap-2">
-							<Button type="submit" disabled={isPending}>
-								{isPending ? "Creating..." : "Create"}
-							</Button>
-							<Button type="button" variant="outline" onClick={onClose}>
-								Cancel
-							</Button>
-						</div>
-					</form>
-				</FormProvider>
-			</CardContent>
-		</Card>
-	);
-}
-
-function EditTaskDialog({
-	task,
-	projectId,
-	open,
-	onOpenChange,
-	onDelete,
-}: {
-	task: Task;
-	projectId: string;
-	open: boolean;
-	onOpenChange: (open: boolean) => void;
-	onDelete: () => void;
-}) {
-	const queryClient = useQueryClient();
-	const { data: members } = useProjectMembers(projectId);
-
-	const form = useForm<z.infer<typeof editTaskFormSchema>>({
-		resolver: zodResolver(editTaskFormSchema),
-		values: {
-			title: task.title,
-			description: task.description ?? "",
-			status: task.status,
-			priority: task.priority,
-			dueDate: task.dueDate
-				? new Date(task.dueDate).toISOString().split("T")[0]
-				: "",
-			assignedTo: task.assignedTo,
-		},
-	});
-
-	const updateMutation = useMutation({
-		mutationFn: (data: z.infer<typeof editTaskFormSchema>) =>
-			apiUpdateTask(projectId, task.id, {
-				title: data.title,
-				description: data.description || null,
-				status: data.status,
-				priority: data.priority,
-				dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : null,
-				assignedTo: data.assignedTo || null,
-			}),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
-			onOpenChange(false);
-		},
-	});
-
-	return (
-		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent>
-				<DialogHeader>
-					<DialogTitle>Edit Task</DialogTitle>
-				</DialogHeader>
-				<FormProvider {...form}>
-					<form
-						onSubmit={form.handleSubmit((data) => updateMutation.mutate(data))}
-						className="space-y-3"
-					>
-						<div className="space-y-1">
-							<Label htmlFor="edit-title">Title</Label>
-							<Input id="edit-title" {...form.register("title")} />
-							{form.formState.errors.title && (
-								<p className="text-sm text-destructive">
-									{form.formState.errors.title.message}
-								</p>
-							)}
-						</div>
-						<div className="space-y-1">
-							<Label htmlFor="edit-desc">Description</Label>
-							<Textarea id="edit-desc" {...form.register("description")} />
-						</div>
-						<div className="space-y-1">
-							<Label htmlFor="edit-status">Status</Label>
-							<Select
-								value={form.watch("status")}
-								onValueChange={(value) => form.setValue("status", value)}
-							>
-								<SelectTrigger id="edit-status" className="w-full">
-									<SelectValue>
-										{(value: string) =>
-											statusOptions.find((o) => o.value === value)?.label ??
-											value
-										}
-									</SelectValue>
-								</SelectTrigger>
-								<SelectContent>
-									{statusOptions.map((o) => (
-										<SelectItem key={o.value} value={o.value}>
-											{o.label}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-						</div>
-						<div className="space-y-1">
-							<Label htmlFor="edit-priority">Priority</Label>
-							<Select
-								value={form.watch("priority")}
-								onValueChange={(value) => form.setValue("priority", value)}
-							>
-								<SelectTrigger id="edit-priority" className="w-full">
-									<SelectValue>
-										{(value: string) =>
-											priorityOptions.find((o) => o.value === value)?.label ??
-											value
-										}
-									</SelectValue>
-								</SelectTrigger>
-								<SelectContent>
-									{priorityOptions.map((o) => (
-										<SelectItem key={o.value} value={o.value}>
-											{o.label}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-						</div>
-						<div className="space-y-1">
-							<Label htmlFor="edit-assignee">Assignee</Label>
-							<Select
-								value={form.watch("assignedTo") ?? ""}
-								onValueChange={(value) =>
-									form.setValue(
-										"assignedTo",
-										value === "unassigned" ? null : value,
-									)
-								}
-							>
-								<SelectTrigger id="edit-assignee" className="w-full">
-									<SelectValue placeholder="Unassigned">
-										{(value: string | null) => {
-											if (!value) return "Unassigned";
-											const member = members?.find((m) => m.id === value);
-											return member?.name ?? value;
-										}}
-									</SelectValue>
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="unassigned">Unassigned</SelectItem>
-									{members?.map((m) => (
-										<SelectItem key={m.id} value={m.id}>
-											{m.name}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-						</div>
-						<Input type="date" {...form.register("dueDate")} />
-						<div className="flex gap-2">
-							<Button type="submit" disabled={updateMutation.isPending}>
-								{updateMutation.isPending ? "Saving..." : "Save"}
-							</Button>
-							<DialogClose asChild>
-								<Button type="button" variant="outline">
-									Cancel
-								</Button>
-							</DialogClose>
-							<Button
-								type="button"
-								variant="destructive"
-								className="ml-auto"
-								onClick={onDelete}
-							>
-								Delete
-							</Button>
-						</div>
-					</form>
-				</FormProvider>
-			</DialogContent>
-		</Dialog>
 	);
 }

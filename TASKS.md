@@ -7,14 +7,14 @@
 - [x] Use relations for db
 - [x] error loading dynamically imported module: "http://localhost:3000/src/routes/projects/$projectId/index.tsx?tsr-split=component"
 - [x] Import alias for all imports instead of absolute path imports
-- [ ] Improve seed script (add more data)
+- [x] Improve seed script (add more data)
 - [x] Use biome for backend
 - [x] Use axios client for frontend
 - [x] Use params in links
-- [ ] Cannot edit task, Use dnd for status
+- [x] Cannot edit task, Use dnd for status
 - [x] Cannot edit task details
 - [x] No members based access on frontend
 - [x] No members modification
-- [ ] Make new project form a dialog
-- [ ] Auth client and server validation
+- [x] Make new project form a dialog
+- [x] Auth client and server validation
 - [ ] Use different db for testing
